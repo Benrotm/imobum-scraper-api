@@ -8,6 +8,104 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase if env vars are present (passed by Render)
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Sleep utility
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+app.post('/api/run-bulk-scrape', async (req, res) => {
+        const { categoryUrl, webhookUrl } = req.body;
+
+        // We respond immediately so the caller (Vercel) doesn't timeout waiting for the massive loop.
+        res.json({ message: 'Bulk scrape started. Processing in background.', categoryUrl });
+
+        if (!categoryUrl || !webhookUrl) {
+                console.error('Missing categoryUrl or webhookUrl');
+                return;
+        }
+
+        try {
+                console.log(`Starting bulk scrape crawler on: ${categoryUrl}`);
+
+                const browser = await chromium.launch({
+                        headless: true,
+                        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--disable-setuid-sandbox']
+                });
+                const context = await browser.newContext({
+                        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                });
+                const page = await context.newPage();
+
+                // Go to category page
+                await page.goto(categoryUrl, { waitUntil: 'load', timeout: 30000 });
+
+                // Wait for listings to appear
+                await page.waitForTimeout(2000);
+
+                // Extract all property links
+                const hrefs = await page.evaluate(() => {
+                        // Publi24 listings are usually in anchors with class or inside list-items
+                        return Array.from(document.querySelectorAll('a[href*="/anunt/"]')).map(a => a.href);
+                });
+
+                // Unique links only
+                const uniqueUrls = [...new Set(hrefs)];
+                console.log(`Found ${uniqueUrls.length} total URLs on page.`);
+
+                await browser.close();
+
+                // Check against Supabase
+                const newUrls = [];
+                if (supabase) {
+                        for (const url of uniqueUrls) {
+                                const { data, error } = await supabase
+                                        .from('scraped_urls')
+                                        .select('url')
+                                        .eq('url', url)
+                                        .single();
+
+                                if (!data && !error) { // If it errors with 'No rows found' basically
+                                        newUrls.push(url);
+                                } else if (error && error.code === 'PGRST116') { // Postgres 116 = NO RESULTS
+                                        newUrls.push(url);
+                                }
+                        }
+                } else {
+                        // If no supabase connected to Render yet, just process all
+                        newUrls.push(...uniqueUrls);
+                }
+
+                console.log(`Filtered down to ${newUrls.length} NEW properties.`);
+
+                // Loop and send to Webhook
+                for (const url of newUrls) {
+                        console.log(`Dispatching ${url} to NextJS webhook...`);
+                        try {
+                                // We send it to Vercel. Vercel's webhook will route it to scrapeProperty -> OCR -> Geocoding -> Supabase DB & Logs
+                                await fetch(webhookUrl, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ url })
+                                });
+
+                                // Safe delay to protect against IP bans on Vercel AND to space out the workload
+                                await delay(12000); // 12 seconds
+                        } catch (err) {
+                                console.error(`Failed to dispatch ${url}:`, err);
+                        }
+                }
+
+                console.log(`Bulk scrape batch finished for ${categoryUrl}`);
+        } catch (e) {
+                console.error('Bulk Scrape Error:', e);
+        }
+});
+
 app.post('/api/scrape-advanced', async (req, res) => {
         const { url } = req.body;
 
