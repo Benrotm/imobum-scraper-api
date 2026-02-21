@@ -19,7 +19,11 @@ const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supaba
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 app.post('/api/run-bulk-scrape', async (req, res) => {
-        const { categoryUrl, webhookUrl, jobId, pagesToScrape = 1, delayMs = 12000 } = req.body;
+        const { categoryUrl, webhookUrl, jobId, pagesToScrape = 1, delayMs = 12000, supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey } = req.body;
+
+        const dynamicSupabaseUrl = reqSupabaseUrl || supabaseUrl;
+        const dynamicSupabaseKey = reqSupabaseKey || supabaseKey;
+        const activeSupabase = (dynamicSupabaseUrl && dynamicSupabaseKey) ? createClient(dynamicSupabaseUrl, dynamicSupabaseKey) : null;
 
         res.json({ message: 'Bulk scrape started. Processing in background.', categoryUrl, jobId });
 
@@ -31,16 +35,24 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
         // Helper to log to Supabase
         const logLive = async (message, level = 'info') => {
                 console.log(`[Job ${jobId}] [${level}] ${message}`);
-                if (supabase && jobId) {
-                        await supabase.from('scrape_logs').insert({ job_id: jobId, message, log_level: level });
+                if (activeSupabase && jobId) {
+                        try {
+                                await activeSupabase.from('scrape_logs').insert({ job_id: jobId, message, log_level: level });
+                        } catch (e) {
+                                console.error('Failed to write log to supabase:', e.message);
+                        }
                 }
         };
 
         // Helper to check if job is user-stopped
         const isJobStopped = async () => {
-                if (!supabase || !jobId) return false;
-                const { data } = await supabase.from('scrape_jobs').select('status').eq('id', jobId).single();
-                return data?.status === 'stopped';
+                if (!activeSupabase || !jobId) return false;
+                try {
+                        const { data } = await activeSupabase.from('scrape_jobs').select('status').eq('id', jobId).single();
+                        return data?.status === 'stopped';
+                } catch (e) {
+                        return false;
+                }
         };
 
         try {
