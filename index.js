@@ -67,6 +67,15 @@ app.post('/api/scrape-advanced', async (req, res) => {
                         }
                 } catch (e) { }
 
+                // Forcefully remove any lingering cookie overlays that might intercept clicks
+                await page.evaluate(() => {
+                        const elements = document.querySelectorAll('[id^="didomi"]');
+                        for (let el of elements) {
+                                el.remove();
+                        }
+                        document.body.style.overflow = 'auto';
+                });
+
                 const buttonSelector = '.show-phone-number button[data-action="phone"], button.btn-show-phone, #showPhone, #showPhoneBottom';
 
                 const phoneText = await page.evaluate(() => {
