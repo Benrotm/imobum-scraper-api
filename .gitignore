@@ -1,0 +1,5 @@
+node_modules
+.env
+phone_debug.png
+phone_debug_out.png
+test_api.js

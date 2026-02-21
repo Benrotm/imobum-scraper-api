@@ -1,0 +1,21 @@
+{
+  "name": "scraper-api-microservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jimp": "^1.6.0",
+    "playwright": "^1.58.2",
+    "playwright-core": "^1.41.0",
+    "tesseract.js": "^7.0.0"
+  }
+}
