@@ -19,18 +19,33 @@ const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supaba
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 app.post('/api/run-bulk-scrape', async (req, res) => {
-        const { categoryUrl, webhookUrl } = req.body;
+        const { categoryUrl, webhookUrl, jobId, pagesToScrape = 1, delayMs = 12000 } = req.body;
 
-        // We respond immediately so the caller (Vercel) doesn't timeout waiting for the massive loop.
-        res.json({ message: 'Bulk scrape started. Processing in background.', categoryUrl });
+        res.json({ message: 'Bulk scrape started. Processing in background.', categoryUrl, jobId });
 
         if (!categoryUrl || !webhookUrl) {
                 console.error('Missing categoryUrl or webhookUrl');
                 return;
         }
 
+        // Helper to log to Supabase
+        const logLive = async (message, level = 'info') => {
+                console.log(`[Job ${jobId}] [${level}] ${message}`);
+                if (supabase && jobId) {
+                        await supabase.from('scrape_logs').insert({ job_id: jobId, message, log_level: level });
+                }
+        };
+
+        // Helper to check if job is user-stopped
+        const isJobStopped = async () => {
+                if (!supabase || !jobId) return false;
+                const { data } = await supabase.from('scrape_jobs').select('status').eq('id', jobId).single();
+                return data?.status === 'stopped';
+        };
+
         try {
-                console.log(`Starting bulk scrape crawler on: ${categoryUrl}`);
+                await logLive(`Starting Bulk Crawler on: ${categoryUrl}`);
+                await logLive(`Pages to Scrape: ${pagesToScrape} | Delay between hits: ${delayMs}ms`);
 
                 const browser = await chromium.launch({
                         headless: true,
@@ -39,70 +54,112 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                 const context = await browser.newContext({
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 });
-                const page = await context.newPage();
 
-                // Go to category page
-                await page.goto(categoryUrl, { waitUntil: 'load', timeout: 30000 });
+                let totalProcessed = 0;
+                let totalSkipped = 0;
 
-                // Wait for listings to appear
-                await page.waitForTimeout(2000);
+                for (let pageNum = 1; pageNum <= pagesToScrape; pageNum++) {
+                        if (await isJobStopped()) {
+                                await logLive('Job was stopped by user. Aborting crawler.', 'warn');
+                                break;
+                        }
 
-                // Extract all property links
-                const hrefs = await page.evaluate(() => {
-                        // Publi24 listings are usually in anchors with class or inside list-items
-                        return Array.from(document.querySelectorAll('a[href*="/anunt/"]')).map(a => a.href);
-                });
+                        const page = await context.newPage();
+                        // Handle publi24 pagination query
+                        const targetUrl = new URL(categoryUrl);
+                        if (pageNum > 1) targetUrl.searchParams.set('pag', pageNum.toString());
 
-                // Unique links only
-                const uniqueUrls = [...new Set(hrefs)];
-                console.log(`Found ${uniqueUrls.length} total URLs on page.`);
+                        await logLive(`Crawling Page ${pageNum}: ${targetUrl.toString()}`);
+                        await page.goto(targetUrl.toString(), { waitUntil: 'load', timeout: 30000 });
+                        await page.waitForTimeout(2000); // Let JS render listings
+
+                        // Extract all property links
+                        const hrefs = await page.evaluate(() => {
+                                return Array.from(document.querySelectorAll('a[href*="/anunt/"]')).map(a => a.href);
+                        });
+
+                        const uniqueUrls = [...new Set(hrefs)];
+                        await logLive(`Found ${uniqueUrls.length} links on Page ${pageNum}. Filtering duplicates...`);
+
+                        await page.close();
+
+                        // Filter against Supabase
+                        const newUrls = [];
+                        if (supabase) {
+                                for (const url of uniqueUrls) {
+                                        const { data, error } = await supabase
+                                                .from('scraped_urls')
+                                                .select('url')
+                                                .eq('url', url)
+                                                .single();
+
+                                        if (!data && !error) { // Postgres handles empty result as error 'No rows found' sometimes, but just in case
+                                                newUrls.push(url);
+                                        } else if (error && error.code === 'PGRST116') { // Postgres "No rows found" error code
+                                                newUrls.push(url);
+                                        } else {
+                                                totalSkipped++;
+                                        }
+                                }
+                        } else {
+                                newUrls.push(...uniqueUrls);
+                        }
+
+                        await logLive(`Filtered down to ${newUrls.length} NEW properties to inject.`);
+
+                        // Loop and send to Webhook
+                        for (const url of newUrls) {
+                                if (await isJobStopped()) {
+                                        await logLive('Job was stopped by user mid-page. Aborting.', 'warn');
+                                        break;
+                                }
+
+                                await logLive(`Dispatching ${url} to MLS Webhook...`);
+                                try {
+                                        const res = await fetch(webhookUrl, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ url })
+                                        });
+
+                                        const result = await res.json();
+                                        if (res.ok && result.id) {
+                                                await logLive(`Success! Webhook stored DB Row ${result.id}`, 'success');
+                                                totalProcessed++;
+                                        } else if (result.status === 'skipped') {
+                                                await logLive(`Webhook ignored: URL already scraped successfully`, 'warn');
+                                                totalSkipped++;
+                                        } else {
+                                                await logLive(`Webhook Failed: ${result.error || 'Unknown Error'}`, 'error');
+                                        }
+
+                                        // Safe delay to protect against IP bans on Vercel AND to space out the workload
+                                        await logLive(`Sleeping for ${delayMs / 1000}s to avoid IP ban...`);
+                                        await delay(delayMs);
+                                } catch (err) {
+                                        await logLive(`Failed to dispatch ${url}: ${err.message}`, 'error');
+                                }
+                        }
+                }
 
                 await browser.close();
 
-                // Check against Supabase
-                const newUrls = [];
-                if (supabase) {
-                        for (const url of uniqueUrls) {
-                                const { data, error } = await supabase
-                                        .from('scraped_urls')
-                                        .select('url')
-                                        .eq('url', url)
-                                        .single();
+                let finalStatus = 'completed';
+                if (await isJobStopped()) finalStatus = 'stopped';
 
-                                if (!data && !error) { // If it errors with 'No rows found' basically
-                                        newUrls.push(url);
-                                } else if (error && error.code === 'PGRST116') { // Postgres 116 = NO RESULTS
-                                        newUrls.push(url);
-                                }
-                        }
-                } else {
-                        // If no supabase connected to Render yet, just process all
-                        newUrls.push(...uniqueUrls);
+                await logLive(`Crawler finished. Processed: ${totalProcessed} | Skipped: ${totalSkipped}. Status: ${finalStatus}`, 'info');
+
+                // Mark job as completed
+                if (supabase && jobId && finalStatus === 'completed') {
+                        await supabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
                 }
 
-                console.log(`Filtered down to ${newUrls.length} NEW properties.`);
-
-                // Loop and send to Webhook
-                for (const url of newUrls) {
-                        console.log(`Dispatching ${url} to NextJS webhook...`);
-                        try {
-                                // We send it to Vercel. Vercel's webhook will route it to scrapeProperty -> OCR -> Geocoding -> Supabase DB & Logs
-                                await fetch(webhookUrl, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ url })
-                                });
-
-                                // Safe delay to protect against IP bans on Vercel AND to space out the workload
-                                await delay(12000); // 12 seconds
-                        } catch (err) {
-                                console.error(`Failed to dispatch ${url}:`, err);
-                        }
-                }
-
-                console.log(`Bulk scrape batch finished for ${categoryUrl}`);
         } catch (e) {
                 console.error('Bulk Scrape Error:', e);
+                if (supabase && jobId) {
+                        await supabase.from('scrape_logs').insert({ job_id: jobId, message: `Fatal Error: ${e.message}`, log_level: 'error' });
+                        await supabase.from('scrape_jobs').update({ status: 'failed', completed_at: new Date() }).eq('id', jobId);
+                }
         }
 });
 
