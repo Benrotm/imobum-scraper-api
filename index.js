@@ -53,58 +53,87 @@ async function extractOlxDetailData(detailPage, logLive) {
                                 }
                         }
 
-                        // 2. Get location — PRIORITIZE the location text element over breadcrumbs
-                        // Try dedicated location elements first (most reliable)
-                        const locSelectors = [
-                                '[data-testid="map-link-text"]',
-                                '.css-1cju8pu',
-                                'a[href*="maps.google.com"]'
-                        ];
-                        for (const sel of locSelectors) {
-                                const locEl = document.querySelector(sel);
-                                if (locEl) {
-                                        // For map links, try parent text; for others, direct text
-                                        let locText = '';
-                                        if (sel.includes('maps.google')) {
-                                                // Get the visible text near the map link
-                                                const parent = locEl.closest('div, section, p');
-                                                if (parent) locText = parent.textContent?.trim() || '';
-                                        } else {
-                                                locText = locEl.textContent?.trim() || '';
+                        // 2. Get location from the LOCALITATE section on the page
+                        // OLX DOM structure:
+                        // <div class="css-154h6ve"> LOCALITATE
+                        //   <div class="css-1pckxcn">
+                        //     <p class="css-9pna1a">Mangalia 7A</p>
+                        //     Timisoara
+                        //   </div>
+                        // </div>
+
+                        // Strategy 1: Find LOCALITATE section directly
+                        const allDivs = document.querySelectorAll('div');
+                        for (const div of allDivs) {
+                                const directText = Array.from(div.childNodes)
+                                        .filter(n => n.nodeType === 3)
+                                        .map(n => n.textContent?.trim())
+                                        .filter(Boolean)
+                                        .join('');
+                                if (directText === 'LOCALITATE') {
+                                        // Found the LOCALITATE heading div - look for address inside
+                                        const innerDiv = div.querySelector('div');
+                                        if (innerDiv) {
+                                                // Get the <p> tag for street address
+                                                const streetP = innerDiv.querySelector('p');
+                                                if (streetP) extracted.area = streetP.textContent?.trim() || '';
+
+                                                // Get the city text (it's a direct text node in innerDiv, not in <p>)
+                                                const childNodes = Array.from(innerDiv.childNodes);
+                                                for (const node of childNodes) {
+                                                        if (node.nodeType === 3) {
+                                                                const txt = node.textContent?.trim();
+                                                                if (txt && txt.length > 1) {
+                                                                        extracted.city = txt;
+                                                                }
+                                                        }
+                                                }
                                         }
-                                        if (locText && locText.length < 100) {
-                                                // Format: "Timisoara, Timis" or "Timisoara - Aradului"
-                                                const locParts = locText.split(/[,\-]/).map(s => s.trim()).filter(s => s);
-                                                if (locParts.length >= 1) extracted.city = locParts[0];
-                                                if (locParts.length >= 2) extracted.county = locParts[1];
-                                                break; // Found a good location source
-                                        }
+                                        break;
                                 }
                         }
 
-                        // Fallback: breadcrumbs (skip known category words)
+                        // Strategy 2: Try data-testid selectors
+                        if (!extracted.city) {
+                                const locEl = document.querySelector('[data-testid="map-link-text"]');
+                                if (locEl) {
+                                        const locText = locEl.textContent?.trim() || '';
+                                        const locParts = locText.split(/[,\-]/).map(s => s.trim()).filter(s => s);
+                                        if (locParts.length >= 1) extracted.city = locParts[0];
+                                        if (locParts.length >= 2) extracted.county = locParts[1];
+                                }
+                        }
+
+                        // Strategy 3: Breadcrumbs (last resort, skip category words)
                         if (!extracted.city && !extracted.county) {
                                 const categoryWords = ['imobiliare', 'apartamente', 'garsoniere', 'case', 'terenuri',
                                         'spatii', 'birouri', 'comerciale', 'de vanzare', 'de inchiriat',
-                                        'vanzare', 'inchiriere', 'camere', 'camera', 'camer'];
+                                        'vanzare', 'inchiriere', 'camere', 'camera', 'camer', 'pagina principala'];
                                 const breadcrumbs = [];
                                 document.querySelectorAll('li[data-testid="breadcrumb-item"] a, ol li a').forEach(a => {
                                         const text = a.textContent?.trim();
-                                        if (text && text !== 'Pagina principala' && text !== 'OLX') breadcrumbs.push(text);
+                                        if (text && text !== 'OLX') breadcrumbs.push(text);
                                 });
-                                // Filter out category words; keep only potential location names
                                 const locationCandidates = breadcrumbs.filter(bc => {
                                         const lower = bc.toLowerCase();
                                         return !categoryWords.some(cw => lower.includes(cw))
                                                 && !lower.match(/^\d+/)
                                                 && bc.length > 2 && bc.length < 40;
                                 });
-                                // The last items in breadcrumbs are typically county, then city
-                                if (locationCandidates.length >= 1) extracted.county = locationCandidates[locationCandidates.length - 2] || locationCandidates[0];
-                                if (locationCandidates.length >= 2) extracted.city = locationCandidates[locationCandidates.length - 1];
+                                // Breadcrumbs: ..."3 camere - Timis" / "3 camere - Timisoara"
+                                // After filtering, we might get items like "Timis", "Timisoara"
+                                for (const lc of locationCandidates) {
+                                        // Try to extract county/city from "X camere - County" pattern
+                                        const dashParts = lc.split('-').map(s => s.trim());
+                                        const cleanPart = dashParts[dashParts.length - 1]; // Take the part after dash
+                                        if (cleanPart && cleanPart.length > 2) {
+                                                if (!extracted.county) extracted.county = cleanPart;
+                                                else if (!extracted.city && cleanPart !== extracted.county) extracted.city = cleanPart;
+                                        }
+                                }
                         }
 
-                        extracted.address = [extracted.city, extracted.county].filter(Boolean).join(', ');
+                        extracted.address = [extracted.area, extracted.city, extracted.county].filter(Boolean).join(', ');
 
                         // 3. Get params (Suprafata utila, Etaj, Compartimentare, An constructie)
                         const params = {};
@@ -137,12 +166,13 @@ async function extractOlxDetailData(detailPage, logLive) {
                         });
                         extracted.olxParams = params;
 
-                        // 4. Get rooms from breadcrumb if not found in params
+                        // 4. Get rooms from breadcrumb text if not found in params
                         if (!params.rooms) {
-                                for (const bc of breadcrumbs) {
-                                        const m = bc.match(/(\d+)\s*camer/);
-                                        if (m) { params.rooms = m[1]; break; }
-                                }
+                                document.querySelectorAll('li[data-testid="breadcrumb-item"] a, ol li a').forEach(a => {
+                                        const text = a.textContent?.trim() || '';
+                                        const m = text.match(/(\d+)\s*camer/);
+                                        if (m && !params.rooms) params.rooms = m[1];
+                                });
                         }
 
                         return extracted;
@@ -157,12 +187,14 @@ async function extractOlxDetailData(detailPage, logLive) {
                         await logLive(`OLX Location: ${data.address}`, 'success');
                 }
 
-                // 5. Try to extract phone number (use .first() to avoid strict mode violation)
+                // 5. Try to extract phone: click "Suna vanzatorul" button, then read tel: link
                 try {
-                        const phoneBtn = detailPage.locator('button:has-text("Afișează"), button:has-text("Arata"), a[data-testid*="phone"], button[data-testid*="phone"]').first();
-                        if (await phoneBtn.isVisible({ timeout: 3000 })) {
+                        // OLX phone button has data-cy="ad-contact-phone" or text "Suna vanzatorul"
+                        const phoneBtn = detailPage.locator('[data-cy="ad-contact-phone"], [data-testid="ad-contact-phone"], button:has-text("Suna vanzatorul"), button:has-text("Suna Vanzatorul")').first();
+                        if (await phoneBtn.isVisible({ timeout: 5000 })) {
                                 await phoneBtn.click();
-                                await detailPage.waitForTimeout(2000);
+                                // Wait for phone number to appear (OLX reveals it after click)
+                                await detailPage.waitForTimeout(3000);
                                 // After click, phone number might appear as text
                                 result.phone = await detailPage.evaluate(() => {
                                         // Look for phone links
@@ -266,6 +298,23 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                         // Extract all property links (site-specific selectors)
                         const linkSelector = isOlx ? 'a[href*="/d/oferta/"]' : 'a[href*="/anunt/"]';
+
+                        // OLX lazy-loads listings: scroll down to load all ~50 items
+                        if (isOlx) {
+                                await logLive('Scrolling to load all OLX listings...');
+                                let prevHeight = 0;
+                                for (let scrollAttempt = 0; scrollAttempt < 10; scrollAttempt++) {
+                                        await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+                                        await page.waitForTimeout(1500);
+                                        const newHeight = await page.evaluate(() => document.body.scrollHeight);
+                                        if (newHeight === prevHeight) break; // No more content
+                                        prevHeight = newHeight;
+                                }
+                                // Scroll back to top
+                                await page.evaluate(() => window.scrollTo(0, 0));
+                                await page.waitForTimeout(500);
+                        }
+
                         const hrefs = await page.evaluate((sel) => {
                                 return Array.from(document.querySelectorAll(sel)).map(a => a.href);
                         }, linkSelector);
