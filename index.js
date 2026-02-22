@@ -296,28 +296,53 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                         await page.goto(targetUrl.toString(), { waitUntil: 'load', timeout: 30000 });
                         await page.waitForTimeout(2000); // Let JS render listings
 
-                        // Extract all property links (site-specific selectors)
-                        const linkSelector = isOlx ? 'a[href*="/d/oferta/"]' : 'a[href*="/anunt/"]';
-
-                        // OLX lazy-loads listings: scroll down to load all ~50 items
+                        // Extract all property links (site-specific strategy)
+                        let hrefs;
                         if (isOlx) {
+                                // OLX mixes native OLX listings + Storia.ro partner ads in the grid
+                                // Use the card selector [data-cy="l-card"] to find ALL listing cards
+                                try {
+                                        await page.waitForSelector('[data-cy="l-card"]', { timeout: 10000 });
+                                } catch (e) {
+                                        await logLive('Warning: Could not find OLX card elements', 'warn');
+                                }
+
+                                // OLX lazy-loads listings: scroll down to ensure all cards are rendered
                                 await logLive('Scrolling to load all OLX listings...');
                                 let prevHeight = 0;
                                 for (let scrollAttempt = 0; scrollAttempt < 10; scrollAttempt++) {
                                         await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
                                         await page.waitForTimeout(1500);
                                         const newHeight = await page.evaluate(() => document.body.scrollHeight);
-                                        if (newHeight === prevHeight) break; // No more content
+                                        if (newHeight === prevHeight) break;
                                         prevHeight = newHeight;
                                 }
-                                // Scroll back to top
                                 await page.evaluate(() => window.scrollTo(0, 0));
                                 await page.waitForTimeout(500);
-                        }
 
-                        const hrefs = await page.evaluate((sel) => {
-                                return Array.from(document.querySelectorAll(sel)).map(a => a.href);
-                        }, linkSelector);
+                                hrefs = await page.evaluate(() => {
+                                        const links = [];
+                                        // Get all listing cards
+                                        const cards = document.querySelectorAll('[data-cy="l-card"]');
+                                        for (const card of cards) {
+                                                // Each card has an <a> link to the listing detail page
+                                                const link = card.querySelector('a[href*="olx.ro/d/"]');
+                                                if (link && link.href) {
+                                                        links.push(link.href);
+                                                }
+                                        }
+                                        // Fallback: also grab any direct /d/oferta/ links not in cards
+                                        document.querySelectorAll('a[href*="/d/oferta/"]').forEach(a => {
+                                                if (a.href && !links.includes(a.href)) links.push(a.href);
+                                        });
+                                        return links;
+                                });
+                        } else {
+                                // Publi24: use the existing href pattern selector
+                                hrefs = await page.evaluate(() => {
+                                        return Array.from(document.querySelectorAll('a[href*="/anunt/"]')).map(a => a.href);
+                                });
+                        }
 
                         const uniqueUrls = [...new Set(hrefs)];
                         await logLive(`Found ${uniqueUrls.length} links on Page ${pageNum}. Filtering duplicates...`);
