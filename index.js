@@ -126,8 +126,9 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         break;
                                 }
 
-                                await logLive(`Extracting phone from ${url}...`);
+                                await logLive(`Extracting phone & location from ${url}...`);
                                 let extractedPhone = null;
+                                let extractedLocation = null;
                                 try {
                                         const detailPage = await context.newPage();
                                         let phoneImageBuffer = null;
@@ -162,6 +163,86 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                                 document.body.style.overflow = 'auto';
                                         });
 
+                                        // === LOCATION EXTRACTION ===
+                                        // Publi24 renders location via JS near a map pin icon
+                                        // e.g. "Timis, Timisoara Girocului" shown as a clickable link
+                                        try {
+                                                extractedLocation = await detailPage.evaluate(() => {
+                                                        const result = { county: '', city: '', area: '', address: '' };
+
+                                                        // Strategy 1: Find the location text near the map pin
+                                                        // Publi24 shows "Timis, Timisoara Girocului" with a map pin icon
+                                                        // Look for links containing "Vezi pe" (view on) near location text
+                                                        const allLinks = document.querySelectorAll('a');
+                                                        for (const link of allLinks) {
+                                                                const text = link.textContent?.trim() || '';
+                                                                const href = link.getAttribute('href') || '';
+                                                                // The location link typically links to a category page and contains comma-separated location
+                                                                if (text.includes(',') && text.length < 80 && !text.includes('EUR') && !text.includes('anunt')
+                                                                        && href.includes('/anunturi/') && !href.includes('.html')) {
+                                                                        // Verify it's not a breadcrumb by checking it doesn't contain category words
+                                                                        const lower = text.toLowerCase();
+                                                                        if (!lower.includes('apartamente') && !lower.includes('imobiliare')
+                                                                                && !lower.includes('de vanzare') && !lower.includes('de inchiriat')
+                                                                                && !lower.includes('publi24')) {
+                                                                                result.address = text;
+                                                                                break;
+                                                                        }
+                                                                }
+                                                        }
+
+                                                        // Strategy 2: Look for elements near the map/location icon
+                                                        if (!result.address) {
+                                                                const mapLinks = document.querySelectorAll('a[href*="harta"], a[href*="#map"]');
+                                                                for (const mapLink of mapLinks) {
+                                                                        const parent = mapLink.parentElement;
+                                                                        if (parent) {
+                                                                                let text = parent.textContent?.trim() || '';
+                                                                                text = text.replace(/vezi\s+pe\s+hart[aă]/gi, '').replace(/hart[aă]/gi, '').trim();
+                                                                                if (text && text.length < 100 && text.includes(',')) {
+                                                                                        result.address = text;
+                                                                                        break;
+                                                                                }
+                                                                        }
+                                                                }
+                                                        }
+
+                                                        // Strategy 3: Look for the specific location display area on Publi24
+                                                        // They show location near the top with coordinates/map
+                                                        if (!result.address) {
+                                                                const locationEl = document.querySelector('.address, .location, [class*="location"], [class*="adresa"]');
+                                                                if (locationEl) {
+                                                                        const text = locationEl.textContent?.trim() || '';
+                                                                        if (text && text.length < 100) result.address = text;
+                                                                }
+                                                        }
+
+                                                        // Parse the address into county/city/area
+                                                        if (result.address) {
+                                                                const parts = result.address.split(',').map(p => p.trim()).filter(p => p);
+                                                                if (parts.length >= 1) result.county = parts[0];
+                                                                if (parts.length >= 2) {
+                                                                        const cityParts = parts[1].split(' ');
+                                                                        result.city = cityParts[0];
+                                                                        if (cityParts.length > 1) {
+                                                                                result.area = cityParts.slice(1).join(' ');
+                                                                        }
+                                                                }
+                                                        }
+
+                                                        return result;
+                                                });
+
+                                                if (extractedLocation && extractedLocation.address) {
+                                                        await logLive(`Location found: ${extractedLocation.address}`, 'success');
+                                                } else {
+                                                        await logLive(`Could not extract location from page`, 'warn');
+                                                }
+                                        } catch (locErr) {
+                                                await logLive(`Location extraction error: ${locErr.message}`, 'warn');
+                                        }
+
+                                        // === PHONE EXTRACTION ===
                                         // Check if phone is already visible in plain text
                                         const plainPhone = await detailPage.evaluate(() => {
                                                 const btn = document.querySelector('.show-phone-number button[data-action="phone"], button.btn-show-phone, #showPhone, #showPhoneBottom');
@@ -212,7 +293,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                                 await logLive(`No phone found for this listing`, 'warn');
                                         }
                                 } catch (phoneErr) {
-                                        await logLive(`Phone extraction error: ${phoneErr.message}`, 'warn');
+                                        await logLive(`Phone/Location extraction error: ${phoneErr.message}`, 'warn');
                                 }
 
                                 await logLive(`Dispatching ${url} to MLS Webhook...`);
@@ -220,7 +301,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         const res = await fetch(webhookUrl, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ url, phoneNumber: extractedPhone })
+                                                body: JSON.stringify({ url, phoneNumber: extractedPhone, location: extractedLocation })
                                         });
 
                                         const result = await res.json();
