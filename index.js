@@ -322,19 +322,15 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                                 hrefs = await page.evaluate(() => {
                                         const links = [];
-                                        // Get all listing cards
+                                        // Get ALL listing cards (native OLX + Storia.ro partner ads)
                                         const cards = document.querySelectorAll('[data-cy="l-card"]');
                                         for (const card of cards) {
-                                                // Each card has an <a> link to the listing detail page
-                                                const link = card.querySelector('a[href*="olx.ro/d/"]');
-                                                if (link && link.href) {
+                                                // Grab the first link in each card (the listing URL)
+                                                const link = card.querySelector('a');
+                                                if (link && link.href && (link.href.includes('/d/') || link.href.includes('storia.ro'))) {
                                                         links.push(link.href);
                                                 }
                                         }
-                                        // Fallback: also grab any direct /d/oferta/ links not in cards
-                                        document.querySelectorAll('a[href*="/d/oferta/"]').forEach(a => {
-                                                if (a.href && !links.includes(a.href)) links.push(a.href);
-                                        });
                                         return links;
                                 });
                         } else {
@@ -385,7 +381,8 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                 let extractedLocation = null;
 
                                 if (isOlx) {
-                                        // === OLX.RO EXTRACTION ===
+                                        // === OLX.RO + STORIA.RO EXTRACTION ===
+                                        // Both OLX native and Storia partner listings use similar DOM
                                         try {
                                                 const detailPage = await context.newPage();
                                                 await detailPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -396,12 +393,12 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                                                 await detailPage.close();
                                                 if (extractedPhone) {
-                                                        await logLive(`OLX Phone extracted: ${extractedPhone}`, 'success');
+                                                        await logLive(`Phone extracted: ${extractedPhone}`, 'success');
                                                 } else {
-                                                        await logLive(`No phone found for OLX listing`, 'warn');
+                                                        await logLive(`No phone found for listing`, 'warn');
                                                 }
                                         } catch (olxErr) {
-                                                await logLive(`OLX extraction error: ${olxErr.message}`, 'warn');
+                                                await logLive(`Detail extraction error: ${olxErr.message}`, 'warn');
                                         }
                                 } else {
                                         // === PUBLI24 EXTRACTION (unchanged) ===
