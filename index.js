@@ -174,7 +174,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         // </p>
                                         try {
                                                 extractedLocation = await detailPage.evaluate(() => {
-                                                        const result = { county: '', city: '', area: '', address: '' };
+                                                        const result = { county: '', city: '', area: '', address: '', latitude: null, longitude: null };
 
                                                         // Find <a id="showMap"> and get its parent <p>
                                                         const showMapLink = document.querySelector('a#showMap');
@@ -196,11 +196,29 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                                                 }
                                                         }
 
+                                                        // Extract lat/lng from page's embedded JavaScript variables
+                                                        // Publi24 stores: var lat = 45.7493087; var lng = 21.2453834;
+                                                        const scripts = document.querySelectorAll('script');
+                                                        for (const script of scripts) {
+                                                                const text = script.textContent || '';
+                                                                const latMatch = text.match(/var\s+lat\s*=\s*([0-9.-]+)/);
+                                                                const lngMatch = text.match(/var\s+lng\s*=\s*([0-9.-]+)/);
+                                                                if (latMatch && lngMatch) {
+                                                                        result.latitude = parseFloat(latMatch[1]);
+                                                                        result.longitude = parseFloat(lngMatch[1]);
+                                                                        break;
+                                                                }
+                                                        }
+
                                                         return result;
                                                 });
 
                                                 if (extractedLocation && extractedLocation.address) {
-                                                        await logLive(`Location found: ${extractedLocation.address}`, 'success');
+                                                        let logMsg = `Location found: ${extractedLocation.address}`;
+                                                        if (extractedLocation.latitude && extractedLocation.longitude) {
+                                                                logMsg += ` | Coords: ${extractedLocation.latitude}, ${extractedLocation.longitude}`;
+                                                        }
+                                                        await logLive(logMsg, 'success');
                                                 } else {
                                                         await logLive(`Could not extract location from page`, 'warn');
                                                 }
