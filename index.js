@@ -97,17 +97,17 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                         // Filter against Supabase
                         const newUrls = [];
-                        if (supabase) {
+                        if (activeSupabase) {
                                 for (const url of uniqueUrls) {
-                                        const { data, error } = await supabase
+                                        const { data, error } = await activeSupabase
                                                 .from('scraped_urls')
                                                 .select('url')
                                                 .eq('url', url)
                                                 .single();
 
-                                        if (!data && !error) { // Postgres handles empty result as error 'No rows found' sometimes, but just in case
+                                        if (!data && !error) {
                                                 newUrls.push(url);
-                                        } else if (error && error.code === 'PGRST116') { // Postgres "No rows found" error code
+                                        } else if (error && error.code === 'PGRST116') {
                                                 newUrls.push(url);
                                         } else {
                                                 totalSkipped++;
@@ -119,7 +119,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                         await logLive(`Filtered down to ${newUrls.length} NEW properties to inject.`);
 
-                        // Loop and send to Webhook (with phone extraction)
+                        // Loop and send to Webhook (with phone + location extraction)
                         for (const url of newUrls) {
                                 if (await isJobStopped()) {
                                         await logLive('Job was stopped by user mid-page. Aborting.', 'warn');
@@ -164,69 +164,35 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         });
 
                                         // === LOCATION EXTRACTION ===
-                                        // Publi24 renders location via JS near a map pin icon
-                                        // e.g. "Timis, Timisoara Girocului" shown as a clickable link
+                                        // Publi24 DOM structure:
+                                        // <p>
+                                        //   <span class="fa fa-map-marker successcolor"></span>
+                                        //   <a href=".../timis/" class="maincolor">Timis</a>,
+                                        //   <a href=".../timisoara/" class="maincolor">Timisoara</a>
+                                        //   <a href="...?area=sagului" class="maincolor">Sagului</a>
+                                        //   <a href="/" id="showMap">Vezi pe harta</a>
+                                        // </p>
                                         try {
                                                 extractedLocation = await detailPage.evaluate(() => {
                                                         const result = { county: '', city: '', area: '', address: '' };
 
-                                                        // Strategy 1: Find the location text near the map pin
-                                                        // Publi24 shows "Timis, Timisoara Girocului" with a map pin icon
-                                                        // Look for links containing "Vezi pe" (view on) near location text
-                                                        const allLinks = document.querySelectorAll('a');
-                                                        for (const link of allLinks) {
-                                                                const text = link.textContent?.trim() || '';
-                                                                const href = link.getAttribute('href') || '';
-                                                                // The location link typically links to a category page and contains comma-separated location
-                                                                if (text.includes(',') && text.length < 80 && !text.includes('EUR') && !text.includes('anunt')
-                                                                        && href.includes('/anunturi/') && !href.includes('.html')) {
-                                                                        // Verify it's not a breadcrumb by checking it doesn't contain category words
-                                                                        const lower = text.toLowerCase();
-                                                                        if (!lower.includes('apartamente') && !lower.includes('imobiliare')
-                                                                                && !lower.includes('de vanzare') && !lower.includes('de inchiriat')
-                                                                                && !lower.includes('publi24')) {
-                                                                                result.address = text;
-                                                                                break;
-                                                                        }
-                                                                }
-                                                        }
+                                                        // Find <a id="showMap"> and get its parent <p>
+                                                        const showMapLink = document.querySelector('a#showMap');
+                                                        if (showMapLink) {
+                                                                const parentP = showMapLink.parentElement;
+                                                                if (parentP) {
+                                                                        // Get all <a class="maincolor"> links inside the parent
+                                                                        const locationLinks = parentP.querySelectorAll('a.maincolor');
+                                                                        const parts = [];
+                                                                        locationLinks.forEach(link => {
+                                                                                const text = link.textContent ? link.textContent.trim() : '';
+                                                                                if (text) parts.push(text);
+                                                                        });
 
-                                                        // Strategy 2: Look for elements near the map/location icon
-                                                        if (!result.address) {
-                                                                const mapLinks = document.querySelectorAll('a[href*="harta"], a[href*="#map"]');
-                                                                for (const mapLink of mapLinks) {
-                                                                        const parent = mapLink.parentElement;
-                                                                        if (parent) {
-                                                                                let text = parent.textContent?.trim() || '';
-                                                                                text = text.replace(/vezi\s+pe\s+hart[aă]/gi, '').replace(/hart[aă]/gi, '').trim();
-                                                                                if (text && text.length < 100 && text.includes(',')) {
-                                                                                        result.address = text;
-                                                                                        break;
-                                                                                }
-                                                                        }
-                                                                }
-                                                        }
-
-                                                        // Strategy 3: Look for the specific location display area on Publi24
-                                                        // They show location near the top with coordinates/map
-                                                        if (!result.address) {
-                                                                const locationEl = document.querySelector('.address, .location, [class*="location"], [class*="adresa"]');
-                                                                if (locationEl) {
-                                                                        const text = locationEl.textContent?.trim() || '';
-                                                                        if (text && text.length < 100) result.address = text;
-                                                                }
-                                                        }
-
-                                                        // Parse the address into county/city/area
-                                                        if (result.address) {
-                                                                const parts = result.address.split(',').map(p => p.trim()).filter(p => p);
-                                                                if (parts.length >= 1) result.county = parts[0];
-                                                                if (parts.length >= 2) {
-                                                                        const cityParts = parts[1].split(' ');
-                                                                        result.city = cityParts[0];
-                                                                        if (cityParts.length > 1) {
-                                                                                result.area = cityParts.slice(1).join(' ');
-                                                                        }
+                                                                        if (parts.length >= 1) result.county = parts[0];  // "Timis"
+                                                                        if (parts.length >= 2) result.city = parts[1];    // "Timisoara"
+                                                                        if (parts.length >= 3) result.area = parts[2];    // "Sagului"
+                                                                        result.address = parts.join(', ');
                                                                 }
                                                         }
 
