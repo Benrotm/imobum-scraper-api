@@ -53,28 +53,55 @@ async function extractOlxDetailData(detailPage, logLive) {
                                 }
                         }
 
-                        // 2. Get location from breadcrumbs or location text
-                        const breadcrumbs = [];
-                        document.querySelectorAll('li[data-testid="breadcrumb-item"] a, ol li a').forEach(a => {
-                                const text = a.textContent?.trim();
-                                if (text && text !== 'Pagina principala' && text !== 'OLX') breadcrumbs.push(text);
-                        });
-                        // Breadcrumbs pattern: ["Imobiliare", "Apartamente...", "2 camere", "Timis", "Timisoara"]
-                        for (const bc of breadcrumbs) {
-                                if (bc.match(/^[A-Z][a-z]+$/)) {
-                                        if (!extracted.county) extracted.county = bc;
-                                        else if (!extracted.city) extracted.city = bc;
+                        // 2. Get location — PRIORITIZE the location text element over breadcrumbs
+                        // Try dedicated location elements first (most reliable)
+                        const locSelectors = [
+                                '[data-testid="map-link-text"]',
+                                '.css-1cju8pu',
+                                'a[href*="maps.google.com"]'
+                        ];
+                        for (const sel of locSelectors) {
+                                const locEl = document.querySelector(sel);
+                                if (locEl) {
+                                        // For map links, try parent text; for others, direct text
+                                        let locText = '';
+                                        if (sel.includes('maps.google')) {
+                                                // Get the visible text near the map link
+                                                const parent = locEl.closest('div, section, p');
+                                                if (parent) locText = parent.textContent?.trim() || '';
+                                        } else {
+                                                locText = locEl.textContent?.trim() || '';
+                                        }
+                                        if (locText && locText.length < 100) {
+                                                // Format: "Timisoara, Timis" or "Timisoara - Aradului"
+                                                const locParts = locText.split(/[,\-]/).map(s => s.trim()).filter(s => s);
+                                                if (locParts.length >= 1) extracted.city = locParts[0];
+                                                if (locParts.length >= 2) extracted.county = locParts[1];
+                                                break; // Found a good location source
+                                        }
                                 }
                         }
 
-                        // Also try the location line in the page
-                        const locEl = document.querySelector('[data-testid="map-link-text"], .css-1cju8pu');
-                        if (locEl) {
-                                const locText = locEl.textContent?.trim() || '';
-                                // Format: "Timisoara, Timis" or similar
-                                const locParts = locText.split(',').map(s => s.trim());
-                                if (locParts.length >= 1 && !extracted.city) extracted.city = locParts[0];
-                                if (locParts.length >= 2 && !extracted.county) extracted.county = locParts[1];
+                        // Fallback: breadcrumbs (skip known category words)
+                        if (!extracted.city && !extracted.county) {
+                                const categoryWords = ['imobiliare', 'apartamente', 'garsoniere', 'case', 'terenuri',
+                                        'spatii', 'birouri', 'comerciale', 'de vanzare', 'de inchiriat',
+                                        'vanzare', 'inchiriere', 'camere', 'camera', 'camer'];
+                                const breadcrumbs = [];
+                                document.querySelectorAll('li[data-testid="breadcrumb-item"] a, ol li a').forEach(a => {
+                                        const text = a.textContent?.trim();
+                                        if (text && text !== 'Pagina principala' && text !== 'OLX') breadcrumbs.push(text);
+                                });
+                                // Filter out category words; keep only potential location names
+                                const locationCandidates = breadcrumbs.filter(bc => {
+                                        const lower = bc.toLowerCase();
+                                        return !categoryWords.some(cw => lower.includes(cw))
+                                                && !lower.match(/^\d+/)
+                                                && bc.length > 2 && bc.length < 40;
+                                });
+                                // The last items in breadcrumbs are typically county, then city
+                                if (locationCandidates.length >= 1) extracted.county = locationCandidates[locationCandidates.length - 2] || locationCandidates[0];
+                                if (locationCandidates.length >= 2) extracted.city = locationCandidates[locationCandidates.length - 1];
                         }
 
                         extracted.address = [extracted.city, extracted.county].filter(Boolean).join(', ');
@@ -130,9 +157,9 @@ async function extractOlxDetailData(detailPage, logLive) {
                         await logLive(`OLX Location: ${data.address}`, 'success');
                 }
 
-                // 5. Try to extract phone number
+                // 5. Try to extract phone number (use .first() to avoid strict mode violation)
                 try {
-                        const phoneBtn = detailPage.locator('button:has-text("Afișează"), button:has-text("Arata"), a[data-testid*="phone"], button[data-testid*="phone"]');
+                        const phoneBtn = detailPage.locator('button:has-text("Afișează"), button:has-text("Arata"), a[data-testid*="phone"], button[data-testid*="phone"]').first();
                         if (await phoneBtn.isVisible({ timeout: 3000 })) {
                                 await phoneBtn.click();
                                 await detailPage.waitForTimeout(2000);
