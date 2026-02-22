@@ -119,11 +119,100 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                         await logLive(`Filtered down to ${newUrls.length} NEW properties to inject.`);
 
-                        // Loop and send to Webhook
+                        // Loop and send to Webhook (with phone extraction)
                         for (const url of newUrls) {
                                 if (await isJobStopped()) {
                                         await logLive('Job was stopped by user mid-page. Aborting.', 'warn');
                                         break;
+                                }
+
+                                await logLive(`Extracting phone from ${url}...`);
+                                let extractedPhone = null;
+                                try {
+                                        const detailPage = await context.newPage();
+                                        let phoneImageBuffer = null;
+
+                                        detailPage.on('response', async (response) => {
+                                                if (response.url().includes('PhoneNumberImages') || response.url().includes('Telefon')) {
+                                                        const contentType = response.headers()['content-type'] || '';
+                                                        try {
+                                                                const buffer = await response.body();
+                                                                if (contentType.includes('json')) { /* ignore */ }
+                                                                else if (contentType.includes('html') || contentType.includes('text')) {
+                                                                        const htmlStr = buffer.toString('utf8').trim();
+                                                                        if (htmlStr.startsWith('iVBOR')) {
+                                                                                phoneImageBuffer = Buffer.from(htmlStr, 'base64');
+                                                                        }
+                                                                } else {
+                                                                        phoneImageBuffer = buffer;
+                                                                }
+                                                        } catch (e) { }
+                                                }
+                                        });
+
+                                        await detailPage.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+                                        // Dismiss cookie overlay
+                                        try {
+                                                const cookieBtn = detailPage.locator('#didomi-notice-agree-button');
+                                                if (await cookieBtn.isVisible({ timeout: 3000 })) await cookieBtn.click();
+                                        } catch (e) { }
+                                        await detailPage.evaluate(() => {
+                                                document.querySelectorAll('[id^="didomi"]').forEach(el => el.remove());
+                                                document.body.style.overflow = 'auto';
+                                        });
+
+                                        // Check if phone is already visible in plain text
+                                        const plainPhone = await detailPage.evaluate(() => {
+                                                const btn = document.querySelector('.show-phone-number button[data-action="phone"], button.btn-show-phone, #showPhone, #showPhoneBottom');
+                                                if (btn && btn.innerText.match(/\d{9,}/)) return btn.innerText.trim();
+                                                return null;
+                                        });
+
+                                        if (plainPhone) {
+                                                extractedPhone = plainPhone.replace(/\D/g, '');
+                                        } else {
+                                                // Click the "show phone" button to trigger the encrypted image load
+                                                try {
+                                                        const btnSelector = '.show-phone-number button[data-action="phone"], button.btn-show-phone, #showPhone, #showPhoneBottom';
+                                                        await detailPage.waitForSelector(btnSelector, { timeout: 5000 });
+                                                        await detailPage.click(btnSelector, { force: true });
+                                                } catch (e) { }
+
+                                                await detailPage.waitForTimeout(3000);
+
+                                                if (phoneImageBuffer) {
+                                                        try {
+                                                                const image = await Jimp.read(phoneImageBuffer);
+                                                                image.resize({ w: image.bitmap.width * 3 });
+                                                                image.invert();
+                                                                const processedBuffer = await image.getBuffer('image/png');
+                                                                const worker = await createWorker('eng');
+                                                                const { data: { text } } = await worker.recognize(processedBuffer);
+                                                                await worker.terminate();
+                                                                const digits = text.replace(/\D/g, '');
+                                                                if (digits.length >= 9) extractedPhone = digits;
+                                                        } catch (ocrErr) {
+                                                                await logLive(`OCR failed for ${url}: ${ocrErr.message}`, 'warn');
+                                                        }
+                                                } else {
+                                                        // Fallback: check button text after click
+                                                        const postClickPhone = await detailPage.evaluate(() => {
+                                                                const btn = document.querySelector('.show-phone-number button[data-action="phone"], button.btn-show-phone, #showPhone, #showPhoneBottom');
+                                                                return btn ? btn.innerText.replace(/\D/g, '') : null;
+                                                        });
+                                                        if (postClickPhone && postClickPhone.length >= 9) extractedPhone = postClickPhone;
+                                                }
+                                        }
+
+                                        await detailPage.close();
+                                        if (extractedPhone) {
+                                                await logLive(`Phone extracted: ${extractedPhone}`, 'success');
+                                        } else {
+                                                await logLive(`No phone found for this listing`, 'warn');
+                                        }
+                                } catch (phoneErr) {
+                                        await logLive(`Phone extraction error: ${phoneErr.message}`, 'warn');
                                 }
 
                                 await logLive(`Dispatching ${url} to MLS Webhook...`);
@@ -131,7 +220,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         const res = await fetch(webhookUrl, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ url })
+                                                body: JSON.stringify({ url, phoneNumber: extractedPhone })
                                         });
 
                                         const result = await res.json();
@@ -145,7 +234,7 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                                 await logLive(`Webhook Failed: ${result.error || 'Unknown Error'}`, 'error');
                                         }
 
-                                        // Safe delay to protect against IP bans on Vercel AND to space out the workload
+                                        // Safe delay to protect against IP bans
                                         await logLive(`Sleeping for ${delayMs / 1000}s to avoid IP ban...`);
                                         await delay(delayMs);
                                 } catch (err) {
