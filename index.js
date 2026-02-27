@@ -222,7 +222,7 @@ async function extractOlxDetailData(detailPage, logLive) {
 }
 
 app.post('/api/run-bulk-scrape', async (req, res) => {
-        const { categoryUrl, webhookUrl, jobId, pagesToScrape = 1, delayMs = 12000, supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey } = req.body;
+        const { categoryUrl, webhookUrl, jobId, pageNum = 1, delayMin = 5, delayMax = 15, mode = 'history', proxyConfig, supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey } = req.body;
 
         const dynamicSupabaseUrl = reqSupabaseUrl || supabaseUrl;
         const dynamicSupabaseKey = reqSupabaseKey || supabaseKey;
@@ -260,14 +260,40 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
         try {
                 await logLive(`Starting Bulk Crawler on: ${categoryUrl}`);
-                await logLive(`Pages to Scrape: ${pagesToScrape} | Delay between hits: ${delayMs}ms`);
+                await logLive(`Target Page: ${pageNum} | Mode: ${mode} | Delay: ${delayMin}-${delayMax}s`);
 
-                const browser = await chromium.launch({
+                const launchOptions = {
                         headless: true,
                         args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--disable-setuid-sandbox']
-                });
+                };
+
+                if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
+                        await logLive(`[PROXY CONNECT] Routing via ${proxyConfig.host}:${proxyConfig.port}`, 'info');
+                        launchOptions.proxy = {
+                                server: `http://${proxyConfig.host}:${proxyConfig.port}`
+                        };
+                        if (proxyConfig.username && proxyConfig.password) {
+                                launchOptions.proxy.username = proxyConfig.username;
+                                launchOptions.proxy.password = proxyConfig.password;
+                        }
+                }
+
+                const browser = await chromium.launch(launchOptions);
                 const context = await browser.newContext({
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                });
+
+                // BANDWIDTH OPTIMIZATION: Block heavy media
+                await context.route('**/*', (route) => {
+                        const request = route.request();
+                        const type = request.resourceType();
+                        if (['image', 'media', 'font', 'stylesheet'].includes(type)) {
+                                if (request.url().includes('PhoneNumberImages') || request.url().includes('Telefon')) {
+                                        return route.continue();
+                                }
+                                return route.abort();
+                        }
+                        return route.continue();
                 });
 
                 // Detect which site we're scraping
@@ -277,8 +303,10 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
 
                 let totalProcessed = 0;
                 let totalSkipped = 0;
+                let watcherAborted = false;
 
-                for (let pageNum = 1; pageNum <= pagesToScrape; pageNum++) {
+                // Process exactly ONE page per execution
+                for (let run = 0; run < 1; run++) {
                         if (await isJobStopped()) {
                                 await logLive('Job was stopped by user. Aborting crawler.', 'warn');
                                 break;
@@ -361,10 +389,19 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                                 newUrls.push(url);
                                         } else {
                                                 totalSkipped++;
+                                                if (mode === 'watcher') {
+                                                        watcherAborted = true;
+                                                        await logLive(`Watcher: Found existing property ${url}. Early aborting page.`, 'warn');
+                                                        break;
+                                                }
                                         }
                                 }
                         } else {
                                 newUrls.push(...uniqueUrls);
+                        }
+
+                        if (watcherAborted) {
+                                break; // Break the outer loop
                         }
 
                         await logLive(`Filtered down to ${newUrls.length} NEW properties to inject.`);
@@ -561,8 +598,9 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                                         }
 
                                         // Safe delay to protect against IP bans
-                                        await logLive(`Sleeping for ${delayMs / 1000}s to avoid IP ban...`);
-                                        await delay(delayMs);
+                                        const actualDelayMs = Math.floor(Math.random() * (delayMax - delayMin + 1) + delayMin) * 1000;
+                                        await logLive(`Sleeping for ${actualDelayMs / 1000}s to avoid IP ban...`);
+                                        await delay(actualDelayMs);
                                 } catch (err) {
                                         await logLive(`Failed to dispatch ${url}: ${err.message}`, 'error');
                                 }
@@ -617,6 +655,20 @@ app.post('/api/scrape-advanced', async (req, res) => {
                 const context = await browser.newContext({
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 });
+
+                // BANDWIDTH OPTIMIZATION: Block heavy media
+                await context.route('**/*', (route) => {
+                        const request = route.request();
+                        const type = request.resourceType();
+                        if (['image', 'media', 'font', 'stylesheet'].includes(type)) {
+                                if (request.url().includes('PhoneNumberImages') || request.url().includes('Telefon')) {
+                                        return route.continue();
+                                }
+                                return route.abort();
+                        }
+                        return route.continue();
+                });
+
                 const page = await context.newPage();
 
                 let phoneImageBuffer = null;
@@ -709,6 +761,197 @@ app.post('/api/scrape-advanced', async (req, res) => {
                 }
         } catch (error) {
                 return res.status(500).json({ error: error.message });
+        }
+});
+
+// === DYNAMIC PARTNER AUTO-SCRAPER ===
+app.post('/api/run-dynamic-scrape', async (req, res) => {
+        const {
+                categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
+                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey
+        } = req.body;
+
+        if (!categoryUrl || !linkSelector || !extractSelectors) {
+                return res.status(400).json({ error: 'Missing required dynamic parameters (categoryUrl, linkSelector, extractSelectors)' });
+        }
+
+        const currentSupabase = (reqSupabaseUrl && reqSupabaseKey) ? createClient(reqSupabaseUrl, reqSupabaseKey) : supabase;
+
+        async function logLive(msg, level = 'info') {
+                console.log(`[DYNAMIC-JOB ${jobId}] ${msg}`);
+                if (currentSupabase && jobId) {
+                        try {
+                                await currentSupabase.from('scrape_logs').insert({ job_id: jobId, message: msg, log_level: level });
+                        } catch (e) { console.error('Failed to save log to Supabase', e); }
+                }
+        }
+
+        async function isJobStopped() {
+                if (!currentSupabase || !jobId) return false;
+                try {
+                        const { data } = await currentSupabase.from('scrape_jobs').select('status').eq('id', jobId).single();
+                        return data?.status === 'stopped';
+                } catch (e) { return false; }
+        }
+
+        // Send early 200 to NextJS caller
+        res.status(200).json({ status: 'Processing started in background' });
+
+        try {
+                // Construct target URL with pageNum
+                const targetUrl = categoryUrl.includes('?') ? `${categoryUrl}&page=${pageNum}` : `${categoryUrl}?page=${pageNum}`;
+                await logLive(`Booting Chrome cluster... Target: ${targetUrl}`, 'info');
+
+                if (await isJobStopped()) {
+                        await logLive('Job stopped before browser launch.', 'warn');
+                        return;
+                }
+
+                const launchOptions = {
+                        headless: true,
+                        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
+                };
+
+                if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
+                        await logLive(`[PROXY CONNECT] Routing via ${proxyConfig.host}:${proxyConfig.port}`, 'info');
+                        launchOptions.proxy = {
+                                server: `http://${proxyConfig.host}:${proxyConfig.port}`
+                        };
+                        if (proxyConfig.username && proxyConfig.password) {
+                                launchOptions.proxy.username = proxyConfig.username;
+                                launchOptions.proxy.password = proxyConfig.password;
+                        }
+                }
+
+                const browser = await chromium.launch(launchOptions);
+
+                const context = await browser.newContext({
+                        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                });
+
+                // BANDWIDTH OPTIMIZATION: Block heavy media
+                await context.route('**/*', (route) => {
+                        const request = route.request();
+                        const type = request.resourceType();
+                        if (['image', 'media', 'font', 'stylesheet'].includes(type)) {
+                                if (request.url().includes('PhoneNumberImages') || request.url().includes('Telefon')) {
+                                        return route.continue();
+                                }
+                                return route.abort();
+                        }
+                        return route.continue();
+                });
+
+                const page = await context.newPage();
+
+                await logLive('Navigating to Dynamic Partner Index...', 'info');
+                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+                // Try to wait for the links to appear
+                try {
+                        await page.waitForSelector(linkSelector, { timeout: 10000 });
+                } catch (e) {
+                        await logLive(`WARNING: Link selector ${linkSelector} not found on page.`, 'warn');
+                }
+
+                const propertyUrls = await page.evaluate((selector) => {
+                        const links = Array.from(document.querySelectorAll(selector));
+                        return links.map(a => a.href).filter(href => href && href.startsWith('http'));
+                }, linkSelector);
+
+                await browser.close();
+
+                await logLive(`Discovered ${propertyUrls.length} links on page limit.`, 'info');
+
+                if (propertyUrls.length === 0) {
+                        await logLive(`Extraction halted. No listings found on page ${pageNum}.`, 'warn');
+                        if (currentSupabase && jobId) {
+                                await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
+                        }
+                        return;
+                }
+
+                let totalProcessed = 0;
+                let totalSkipped = 0;
+
+                for (let i = 0; i < propertyUrls.length; i++) {
+                        if (await isJobStopped()) break;
+
+                        const propUrl = propertyUrls[i];
+
+                        // WATCHER FILTER LOGIC
+                        if (currentSupabase) {
+                                const { data: existingURL } = await currentSupabase
+                                        .from('scraped_urls')
+                                        .select('url')
+                                        .eq('url', propUrl)
+                                        .single();
+
+                                if (existingURL) {
+                                        totalSkipped++;
+                                        if (mode === 'watcher') {
+                                                await logLive(`[WATCHER MODE] Found existing URL (${propUrl}). Aborting cycle early!`, 'success');
+                                                break; // Abort entire run!
+                                        }
+                                        await logLive(`Skipping duplicate URL ${i + 1}/${propertyUrls.length}`, 'warn');
+                                        continue;
+                                }
+                        }
+
+                        // Parse the actual property internally via NextJS 'scrape.ts' emulator
+                        try {
+                                const apiUrl = (reqSupabaseUrl || 'http://localhost:3000').replace('supabase.co', 'vercel.app'); // Heuristic guess
+
+                                await logLive(`Parsing HTML for ${propUrl}...`, 'info');
+
+                                // Call a new lightweight Next.js api endpoint we are about to create specifically for this bridge:
+                                // POST /api/admin/headless-dynamic-import
+                                const nextjsBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
+                                const parseReq = await fetch(`${nextjsBase}/api/admin/headless-dynamic-import`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                                url: propUrl,
+                                                selectors: extractSelectors
+                                        })
+                                });
+
+                                const parseRes = await parseReq.json();
+
+                                if (parseRes && parseRes.success) {
+                                        await logLive(`Successfully extracted and saved property: ${parseRes.title || propUrl}`, 'success');
+                                        totalProcessed++;
+                                } else {
+                                        await logLive(`Failed processing ${propUrl}: ${parseRes?.error || 'Unknown'}`, 'error');
+                                }
+
+                                // Random Delay Anti-Ban
+                                const dMin = parseInt(delayMin) || 5;
+                                const dMax = parseInt(delayMax) || 15;
+                                const actualDelayMs = Math.floor(Math.random() * (dMax - dMin + 1) + dMin) * 1000;
+                                await logLive(`Rate Limit Shield: Sleeping ${actualDelayMs / 1000}s...`, 'info');
+                                await delay(actualDelayMs);
+
+                        } catch (err) {
+                                await logLive(`Failed processing ${propUrl}: ${err.message}`, 'error');
+                        }
+                } // End loop
+
+                let finalStatus = 'completed';
+                if (await isJobStopped()) finalStatus = 'stopped';
+
+                await logLive(`Dynamic Crawler finished. Processed: ${totalProcessed} | Skipped: ${totalSkipped}. Status: ${finalStatus}`, 'info');
+
+                if (currentSupabase && jobId && finalStatus === 'completed') {
+                        await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
+                }
+
+        } catch (e) {
+                console.error('Dynamic Scrape Error:', e);
+                await logLive(`Fatal Error: ${e.message}`, 'error');
+                if (currentSupabase && jobId) {
+                        await currentSupabase.from('scrape_jobs').update({ status: 'failed', completed_at: new Date() }).eq('id', jobId);
+                }
         }
 });
 
