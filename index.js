@@ -876,7 +876,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 const propertyUrls = await page.evaluate((selector) => {
                         const links = Array.from(document.querySelectorAll(selector));
-                        return links.map(a => a.href).filter(href => href && href.startsWith('http'));
+                        const validHrefs = links.map(a => a.href).filter(href => href && href.startsWith('http'));
+                        return Array.from(new Set(validHrefs));
                 }, linkSelector);
 
                 await browser.close();
