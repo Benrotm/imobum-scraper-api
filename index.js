@@ -830,18 +830,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 });
 
-                // BANDWIDTH OPTIMIZATION: Block heavy media
-                await context.route('**/*', (route) => {
-                        const request = route.request();
-                        const type = request.resourceType();
-                        if (['image', 'media', 'font', 'stylesheet'].includes(type)) {
-                                if (request.url().includes('PhoneNumberImages') || request.url().includes('Telefon')) {
-                                        return route.continue();
-                                }
-                                return route.abort();
-                        }
-                        return route.continue();
-                });
+                // BANDWIDTH OPTIMIZATION REMOVED: Immoflux relies heavily on assets for React hydration.
+                // Blocking stylesheets/fonts caused the BrightData residential proxy to timeout during domcontentloaded.
 
                 const page = await context.newPage();
 
