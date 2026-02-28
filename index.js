@@ -875,12 +875,13 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 }
 
                 const propertyUrls = await page.evaluate((selector) => {
-                        const links = Array.from(document.querySelectorAll(selector));
+                        const links = Array.from(document.querySelectorAll(selector || 'a'));
                         let validUrls = [];
 
                         for (const el of links) {
-                                let urlStr = el.href || el.getAttribute('href') || el.getAttribute('data-url');
-                                if (!urlStr) continue;
+                                // Prioritize data-url. href often contains "javascript:void(0)" on Immoflux which overrides it.
+                                let urlStr = el.getAttribute('data-url') || el.href || el.getAttribute('href');
+                                if (!urlStr || urlStr.includes('javascript:')) continue;
                                 try {
                                         // Resolve relative URLs (like /approperties/123) against the base URL
                                         const resolved = new URL(urlStr, window.location.href).href;
