@@ -767,9 +767,7 @@ app.post('/api/scrape-advanced', async (req, res) => {
 // === DYNAMIC PARTNER AUTO-SCRAPER ===
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
-                categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
-                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
-                immofluxUser, immofluxPass
+                immofluxUser, immofluxPass, adminId
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
@@ -963,7 +961,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         body: JSON.stringify({
                                                 url: propUrl,
                                                 selectors: extractSelectors,
-                                                html: rawHtml
+                                                html: rawHtml,
+                                                adminId: adminId
                                         })
                                 });
 
