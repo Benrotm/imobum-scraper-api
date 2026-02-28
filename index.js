@@ -768,7 +768,8 @@ app.post('/api/scrape-advanced', async (req, res) => {
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
                 categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
-                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl
+                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
+                immofluxUser, immofluxPass
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
@@ -846,6 +847,25 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 await logLive('Navigating to Dynamic Partner Index...', 'info');
                 await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+                // Immoflux Auto-Login Interceptor
+                if (page.url().includes('login') && immofluxUser && immofluxPass) {
+                        await logLive(`Intercepted Login Firewall. Authenticating as ${immofluxUser}...`, 'info');
+                        try {
+                                await page.waitForSelector('#inputEmail', { timeout: 10000 });
+                                await page.type('#inputEmail', immofluxUser);
+                                await page.type('#inputPassword', immofluxPass);
+                                await Promise.all([
+                                        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }),
+                                        page.click('button[type="submit"]')
+                                ]);
+                                await logLive('Authentication successful.', 'success');
+                                await logLive('Returning to target page after login...', 'info');
+                                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                        } catch (authErr) {
+                                await logLive(`Auto-login failed: ${authErr.message}`, 'error');
+                        }
+                }
 
                 // Try to wait for the links to appear
                 try {
