@@ -768,7 +768,7 @@ app.post('/api/scrape-advanced', async (req, res) => {
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
                 categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
-                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey
+                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
@@ -906,7 +906,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                 // Call a new lightweight Next.js api endpoint we are about to create specifically for this bridge:
                                 // POST /api/admin/headless-dynamic-import
-                                const nextjsBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
+                                const nextjsBase = webhookBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
                                 const parseReq = await fetch(`${nextjsBase}/api/admin/headless-dynamic-import`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
