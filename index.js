@@ -956,6 +956,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                 await logLive(`Parsing HTML for ${propUrl}...`, 'info');
 
+                                const cookieArray = await context.cookies();
+                                const cookieString = cookieArray.map(c => `${c.name}=${c.value}`).join('; ');
+
                                 // Call a new lightweight Next.js api endpoint we are about to create specifically for this bridge:
                                 // POST /api/admin/headless-dynamic-import
                                 const nextjsBase = webhookBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
@@ -964,7 +967,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
                                                 url: propUrl,
-                                                selectors: extractSelectors
+                                                selectors: extractSelectors,
+                                                cookies: cookieString
                                         })
                                 });
 
