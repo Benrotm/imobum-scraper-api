@@ -957,6 +957,20 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const cookieArray = await context.cookies();
                                 const cookieString = cookieArray.map(c => `${c.name}=${c.value}`).join('; ');
 
+                                // Fetch HTML locally using Render's consistent IP and active session cookies
+                                const propReq = await fetch(propUrl, {
+                                        headers: {
+                                                'Cookie': cookieString,
+                                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                                        }
+                                });
+
+                                if (!propReq.ok) {
+                                        await logLive(`Failed fetching HTML for ${propUrl}: ${propReq.statusText}`, 'error');
+                                        continue;
+                                }
+                                const rawHtml = await propReq.text();
+
                                 // Call a new lightweight Next.js api endpoint we are about to create specifically for this bridge:
                                 // POST /api/admin/headless-dynamic-import
                                 const nextjsBase = webhookBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
@@ -966,7 +980,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         body: JSON.stringify({
                                                 url: propUrl,
                                                 selectors: extractSelectors,
-                                                cookies: cookieString
+                                                html: rawHtml
                                         })
                                 });
 
