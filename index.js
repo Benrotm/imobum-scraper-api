@@ -869,15 +869,18 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
+                let waitSelector = linkSelector;
                 if (targetUrl.includes('immoflux.ro')) {
                         effectiveSelector = '.avatar-ap, a';
+                        waitSelector = '.avatar-ap'; // Strictly wait for actual listing cards, not just sidebar <a> links
                 }
 
                 // Try to wait for the links to appear
                 try {
-                        await page.waitForSelector(effectiveSelector, { timeout: 10000 });
+                        await page.waitForSelector(waitSelector, { timeout: 15000 });
+                        await page.waitForTimeout(1500); // Give JS framework time to settle
                 } catch (e) {
-                        await logLive(`WARNING: Link selector ${effectiveSelector} not found on page.`, 'warn');
+                        await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
                 }
 
                 const propertyUrls = await page.evaluate((selector) => {
