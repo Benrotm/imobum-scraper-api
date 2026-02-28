@@ -911,8 +911,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         return Array.from(new Set(validHrefs));
                 }, linkSelector);
 
-                await browser.close();
-
                 await logLive(`Discovered ${propertyUrls.length} links on page limit.`, 'info');
 
                 if (propertyUrls.length === 0) {
@@ -1007,6 +1005,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 await logLive(`Fatal Error: ${e.message}`, 'error');
                 if (currentSupabase && jobId) {
                         await currentSupabase.from('scrape_jobs').update({ status: 'failed', completed_at: new Date() }).eq('id', jobId);
+                }
+        } finally {
+                if (browser) {
+                        try {
+                                await browser.close();
+                        } catch (err) { }
                 }
         }
 });
