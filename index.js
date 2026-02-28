@@ -813,16 +813,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
                 };
 
-                if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
-                        await logLive(`[PROXY CONNECT] Routing via ${proxyConfig.host}:${proxyConfig.port}`, 'info');
-                        launchOptions.proxy = {
-                                server: `http://${proxyConfig.host}:${proxyConfig.port}`
-                        };
-                        if (proxyConfig.username && proxyConfig.password) {
-                                launchOptions.proxy.username = proxyConfig.username;
-                                launchOptions.proxy.password = proxyConfig.password;
-                        }
-                }
+                // PROXY BYPASS: Immoflux actively blocks BrightData and residential proxies.
+                // It requires the static Render IP that the user initiated the login session with.
+                // launchOptions.proxy injection is intentionally disabled here.
 
                 const browser = await chromium.launch(launchOptions);
 
