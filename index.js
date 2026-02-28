@@ -876,7 +876,19 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 const propertyUrls = await page.evaluate((selector) => {
                         const links = Array.from(document.querySelectorAll(selector));
-                        let validHrefs = links.map(a => a.href).filter(href => href && href.startsWith('http'));
+                        let validUrls = [];
+
+                        for (const el of links) {
+                                let urlStr = el.href || el.getAttribute('href') || el.getAttribute('data-url');
+                                if (!urlStr) continue;
+                                try {
+                                        // Resolve relative URLs (like /approperties/123) against the base URL
+                                        const resolved = new URL(urlStr, window.location.href).href;
+                                        validUrls.push(resolved);
+                                } catch (e) { }
+                        }
+
+                        let validHrefs = validUrls.filter(href => href && href.startsWith('http'));
 
                         if (window.location.href.includes('immoflux.ro')) {
                                 // Exclude all navigation, sidebar, internal logic, and pagination links
@@ -893,6 +905,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         !href.includes('/ansambluri') &&
                                         !href.includes('/cereri') &&
                                         !href.includes('/dashboard') &&
+                                        !href.includes('/properties/create') &&
+                                        !href.includes('/suport-crm-imobiliare') &&
+                                        !href.includes('/tutorials') &&
                                         !href.match(/\?page=\d+/) // exclude pagination
                                 );
                         }
