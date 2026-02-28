@@ -891,24 +891,10 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         let validHrefs = validUrls.filter(href => href && href.startsWith('http'));
 
                         if (window.location.href.includes('immoflux.ro')) {
-                                // Exclude all navigation, sidebar, internal logic, and pagination links
+                                // Strictly INCLUDE only valid property detail paths, explicitly excluding pagination
                                 validHrefs = validHrefs.filter(href =>
-                                        !href.includes('/auth/') &&
-                                        !href.includes('/journal') &&
-                                        !href.includes('/leads') &&
-                                        !href.includes('/contacts') &&
-                                        !href.includes('/reports') &&
-                                        !href.includes('/settings') &&
-                                        !href.includes('/frontnotifications') &&
-                                        !href.includes('/pins') &&
-                                        !href.includes('/agents/') &&
-                                        !href.includes('/ansambluri') &&
-                                        !href.includes('/cereri') &&
-                                        !href.includes('/dashboard') &&
-                                        !href.includes('/properties/create') &&
-                                        !href.includes('/suport-crm-imobiliare') &&
-                                        !href.includes('/tutorials') &&
-                                        !href.match(/\?page=\d+/) // exclude pagination
+                                        (href.includes('/ap/slidepanel/') || href.includes('/approperties/')) &&
+                                        !href.match(/\?page=\d+/)
                                 );
                         }
 
