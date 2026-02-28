@@ -867,11 +867,17 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         }
                 }
 
+                // Override incorrect DB configurations for Immoflux
+                let effectiveSelector = linkSelector;
+                if (targetUrl.includes('immoflux.ro')) {
+                        effectiveSelector = '.avatar-ap, a';
+                }
+
                 // Try to wait for the links to appear
                 try {
-                        await page.waitForSelector(linkSelector, { timeout: 10000 });
+                        await page.waitForSelector(effectiveSelector, { timeout: 10000 });
                 } catch (e) {
-                        await logLive(`WARNING: Link selector ${linkSelector} not found on page.`, 'warn');
+                        await logLive(`WARNING: Link selector ${effectiveSelector} not found on page.`, 'warn');
                 }
 
                 const propertyUrls = await page.evaluate((selector) => {
