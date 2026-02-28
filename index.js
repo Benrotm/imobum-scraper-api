@@ -867,106 +867,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         }
                 }
 
-                // === IMMOFLUX LIST EXTRACTION ===
-                if (targetUrl.includes('immoflux.ro')) {
-                        await logLive('Immoflux detected: Extracting properties directly from list view...', 'info');
-
-                        const extractedProperties = await page.evaluate((extractors) => {
-                                const rows = Array.from(document.querySelectorAll('tbody tr, .tablesaw tbody tr, table tr'));
-                                const results = [];
-
-                                for (const row of rows) {
-                                        const data = {};
-                                        let hasData = false;
-                                        for (const [key, selector] of Object.entries(extractors)) {
-                                                if (!selector || selector.trim() === '') continue;
-                                                // Support nth-child within the row
-                                                const el = row.querySelector(selector);
-                                                if (el) {
-                                                        data[key] = el.innerText ? el.innerText.replace(/\s+/g, ' ').trim() : '';
-                                                        hasData = true;
-                                                }
-                                        }
-
-                                        if (hasData && (data.title || data.price)) {
-                                                const pseudoUrl = `immoflux://${encodeURIComponent(data.title || 'no-title').substring(0, 30)}-${encodeURIComponent(data.price || 'no-price')}`;
-                                                results.push({ url: pseudoUrl, ...data });
-                                        }
-                                }
-                                return results;
-                        }, extractSelectors);
-
-                        await browser.close();
-
-                        await logLive(`Extracted ${extractedProperties.length} properties from table.`, 'info');
-
-                        let totalProcessed = 0;
-                        let totalSkipped = 0;
-
-                        for (let i = 0; i < extractedProperties.length; i++) {
-                                if (await isJobStopped()) break;
-
-                                const prop = extractedProperties[i];
-
-                                // WATCHER FILTER LOGIC
-                                if (currentSupabase) {
-                                        const { data: existingURL } = await currentSupabase
-                                                .from('scraped_urls')
-                                                .select('url')
-                                                .eq('url', prop.url)
-                                                .single();
-
-                                        if (existingURL) {
-                                                totalSkipped++;
-                                                if (mode === 'watcher') {
-                                                        await logLive(`[WATCHER MODE] Found existing property. Aborting cycle early!`, 'success');
-                                                        break;
-                                                }
-                                                continue;
-                                        }
-                                }
-
-                                await logLive(`Processing [${prop.title || 'Unknown Title'}]...`, 'info');
-
-                                try {
-                                        const whRes = await fetch(`${webhookBaseUrl}/api/admin/headless-dynamic-import`, {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                        url: prop.url,
-                                                        propertyData: prop,
-                                                        jobId
-                                                })
-                                        });
-
-                                        if (whRes.ok) {
-                                                const whJson = await whRes.json();
-                                                if (whJson.skipped || (!whJson.success && whJson.error?.includes('duplicate'))) {
-                                                        totalSkipped++;
-                                                } else {
-                                                        totalProcessed++;
-                                                        if (currentSupabase) {
-                                                                await currentSupabase.from('scraped_urls').insert({ url: prop.url, source: 'immoflux' });
-                                                        }
-                                                        await logLive(`Webhook saved: ${prop.title}`, 'success');
-                                                }
-                                        } else {
-                                                await logLive(`Webhook rejected: ${prop.title}`, 'warn');
-                                        }
-                                } catch (err) {
-                                        await logLive(`Webhook fetch error: ${err.message}`, 'error');
-                                }
-                        }
-
-                        await logLive(`Completed. Processed: ${totalProcessed}, Skipped: ${totalSkipped}.`, 'success');
-
-                        if (currentSupabase && jobId) {
-                                await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
-                        }
-
-                        return res.json({ success: true, totalProcessed, totalSkipped });
-                }
-
                 // Try to wait for the links to appear
                 try {
                         await page.waitForSelector(linkSelector, { timeout: 10000 });
@@ -976,7 +876,27 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 const propertyUrls = await page.evaluate((selector) => {
                         const links = Array.from(document.querySelectorAll(selector));
-                        const validHrefs = links.map(a => a.href).filter(href => href && href.startsWith('http'));
+                        let validHrefs = links.map(a => a.href).filter(href => href && href.startsWith('http'));
+
+                        if (window.location.href.includes('immoflux.ro')) {
+                                // Exclude all navigation, sidebar, internal logic, and pagination links
+                                validHrefs = validHrefs.filter(href =>
+                                        !href.includes('/auth/') &&
+                                        !href.includes('/journal') &&
+                                        !href.includes('/leads') &&
+                                        !href.includes('/contacts') &&
+                                        !href.includes('/reports') &&
+                                        !href.includes('/settings') &&
+                                        !href.includes('/frontnotifications') &&
+                                        !href.includes('/pins') &&
+                                        !href.includes('/agents/') &&
+                                        !href.includes('/ansambluri') &&
+                                        !href.includes('/cereri') &&
+                                        !href.includes('/dashboard') &&
+                                        !href.match(/\?page=\d+/) // exclude pagination
+                                );
+                        }
+
                         return Array.from(new Set(validHrefs));
                 }, linkSelector);
 
