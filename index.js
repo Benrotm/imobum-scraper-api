@@ -767,7 +767,10 @@ app.post('/api/scrape-advanced', async (req, res) => {
 // === DYNAMIC PARTNER AUTO-SCRAPER ===
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
-                immofluxUser, immofluxPass, adminId
+                categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
+                supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
+                immofluxUser, immofluxPass,
+                adminId
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
