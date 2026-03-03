@@ -764,6 +764,9 @@ app.post('/api/scrape-advanced', async (req, res) => {
         }
 });
 
+// Memory lock to prevent redundant executions caused by cloud network retries
+const activeJobs = new Set();
+
 // === DYNAMIC PARTNER AUTO-SCRAPER ===
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
@@ -796,7 +799,17 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 } catch (e) { return false; }
         }
 
-        // Send early 200 to NextJS caller
+        // Require active Job ID to enforce locks
+        if (!jobId) return res.status(400).json({ error: 'Missing Job ID' });
+
+        // Strict Idempotency Lock
+        if (activeJobs.has(jobId)) {
+                console.log(`[DUPLICATE REJECTED] Ignoring subsequent request for active jobId: ${jobId}`);
+                return res.status(200).json({ status: 'Already processing' });
+        }
+        activeJobs.add(jobId);
+
+        // Send early 200 to NextJS caller 
         res.status(200).json({ status: 'Processing started in background' });
 
         try {
@@ -854,12 +867,14 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
                 let waitSelector = linkSelector;
-                if (targetUrl.includes('immoflux.ro')) {
+                if (targetUrl.includes('immoflux.ro') && !targetUrl.includes('fluxmls')) {
                         effectiveSelector = '.avatar-ap, a';
                         waitSelector = '.avatar-ap'; // Strictly wait for actual listing cards, not just sidebar <a> links
+                } else if (targetUrl.includes('fluxmls')) {
+                        effectiveSelector = 'tr.model-item';
+                        waitSelector = 'tr.model-item';
                 }
 
-                // Try to wait for the links to appear
                 try {
                         await page.waitForSelector(waitSelector, { timeout: 15000 });
                         await page.waitForTimeout(1500); // Give JS framework time to settle
@@ -867,11 +882,28 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
                 }
 
+                if (targetUrl.includes('fluxmls')) {
+                        try {
+                                const debugHtml = await page.content();
+                                require('fs').writeFileSync('C:\\Users\\bensi\\Downloads\\Git hub Repository\\real-estate-mls\\scraper-api-microservice\\flux_dump.html', debugHtml);
+                        } catch (e) { }
+                }
+
                 const propertyUrls = await page.evaluate((selector) => {
                         const links = Array.from(document.querySelectorAll(selector || 'a'));
                         let validUrls = [];
 
                         for (const el of links) {
+                                // For FluxMLS, the user wants us to scrape the `propertyshow` page based on the ID
+                                if (window.location.href.includes('fluxmls')) {
+                                        const idSpan = el.querySelector('span.text-muted');
+                                        if (idSpan && idSpan.innerText.includes('FX')) {
+                                                const fxId = idSpan.innerText.trim();
+                                                validUrls.push(`https://fluxmls.immoflux.ro/propertyshow/${fxId}`);
+                                        }
+                                        continue;
+                                }
+
                                 // Prioritize data-url. href often contains "javascript:void(0)" on Immoflux which overrides it.
                                 let urlStr = el.getAttribute('data-url') || el.href || el.getAttribute('href');
                                 if (!urlStr || urlStr.includes('javascript:')) continue;
@@ -884,12 +916,14 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                         let validHrefs = validUrls.filter(href => href && href.startsWith('http'));
 
-                        if (window.location.href.includes('immoflux.ro')) {
+                        if (window.location.href.includes('immoflux.ro') && !window.location.href.includes('fluxmls')) {
                                 // Strictly INCLUDE only valid property detail paths, explicitly excluding pagination
                                 validHrefs = validHrefs.filter(href =>
-                                        (href.includes('/ap/slidepanel/') || href.includes('/approperties/')) &&
+                                        (href.includes('/ap/slidepanel/') || href.includes('/approperties/') || (href.includes('/properties/') && href.includes('/slidepanel'))) &&
                                         !href.match(/\?page=\d+/)
                                 );
+                        } else if (window.location.href.includes('fluxmls')) {
+                                validHrefs = validHrefs.filter(href => href.includes('/propertyshow/FX'));
                         }
 
                         return Array.from(new Set(validHrefs));
@@ -999,12 +1033,19 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
                 }
 
-        } catch (e) {
-                console.error('Dynamic Scrape Error:', e);
-                await logLive(`Fatal Error: ${e.message}`, 'error');
+                activeJobs.delete(jobId);
+
+        } catch (error) {
+                console.error(`[DYNAMIC-JOB ${jobId}] FATAL:`, error);
+
                 if (currentSupabase && jobId) {
-                        await currentSupabase.from('scrape_jobs').update({ status: 'failed', completed_at: new Date() }).eq('id', jobId);
+                        try {
+                                await currentSupabase.from('scrape_jobs').update({ status: 'failed', completed_at: new Date() }).eq('id', jobId);
+                                await currentSupabase.from('scrape_logs').insert({ job_id: jobId, message: `FATAL EXCEPTION: ${error.message}`, log_level: 'error' });
+                        } catch (e) { }
                 }
+
+                activeJobs.delete(jobId);
         } finally {
                 if (browser) {
                         try {
