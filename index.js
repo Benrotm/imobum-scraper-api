@@ -934,14 +934,16 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                         headers: { 'Cookie': ck, 'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest' }
                                                 });
                                                 const panelHtml = await panelRes.text();
+                                                // Strip HTML tags to get clean text for matching
+                                                const panelText = panelHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
                                                 // Extract phone after "Telefon" label
-                                                const phoneMatch = panelHtml.match(/Telefon\s*<\/\w+>\s*([^<]+)/i) || panelHtml.match(/Telefon\s*\n\s*([\+\d\s]+)/i);
+                                                const phoneMatch = panelText.match(/Telefon\s+([\+\d\s]{10,20})/i);
                                                 if (phoneMatch && phoneMatch[1]) {
                                                         const cleaned = phoneMatch[1].trim().replace(/\s/g, '');
                                                         if (cleaned.length >= 10) fluxAgentMap[ag.fxId].phone = cleaned;
                                                 }
-                                                // Extract email
-                                                const emailMatch = panelHtml.match(/E-mail\s*<\/\w+>\s*([^<]+)/i) || panelHtml.match(/E-mail\s*\n\s*(\S+@\S+)/i);
+                                                // Extract email after "E-mail" label
+                                                const emailMatch = panelText.match(/E-mail\s+(\S+@\S+)/i);
                                                 if (emailMatch && emailMatch[1]) {
                                                         fluxAgentMap[ag.fxId].email = emailMatch[1].trim();
                                                 }
