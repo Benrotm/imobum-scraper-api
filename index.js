@@ -843,27 +843,39 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 const page = await context.newPage();
 
-                await logLive('Navigating to Dynamic Partner Index...', 'info');
-                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                // Upfront explicit login to negotiate CSRF tokens correctly
+                const isFlux = targetUrl.includes('fluxmls.immoflux.ro');
+                const isImmo = targetUrl.includes('immoflux.ro') && !isFlux;
 
-                // Immoflux Auto-Login Interceptor
-                if (page.url().includes('login') && immofluxUser && immofluxPass) {
-                        await logLive(`Intercepted Login Firewall. Authenticating as ${immofluxUser}...`, 'info');
-                        try {
-                                await page.waitForSelector('#inputEmail', { timeout: 10000 });
-                                await page.type('#inputEmail', immofluxUser);
-                                await page.type('#inputPassword', immofluxPass);
-                                await Promise.all([
-                                        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }),
-                                        page.click('button[type="submit"]')
-                                ]);
-                                await logLive('Authentication successful.', 'success');
-                                await logLive('Returning to target page after login...', 'info');
-                                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
-                        } catch (authErr) {
-                                await logLive(`Auto-login failed: ${authErr.message}`, 'error');
+                if ((isFlux || isImmo) && immofluxUser && immofluxPass) {
+                        const loginUrl = isFlux ? 'https://fluxmls.immoflux.ro/login' : 'https://immoflux.ro/login';
+                        await logLive(`Performing upfront authentication for ${loginUrl}...`, 'info');
+
+                        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+                        // IF we are already logged in, it will redirect out of /login. 
+                        // We only type credentials if we are still on the login page.
+                        if (page.url().includes('login')) {
+                                await logLive(`Typing credentials for ${immofluxUser}...`, 'info');
+                                try {
+                                        await page.waitForSelector('#inputEmail', { timeout: 10000 });
+                                        await page.type('#inputEmail', immofluxUser);
+                                        await page.type('#inputPassword', immofluxPass);
+                                        await Promise.all([
+                                                page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }),
+                                                page.click('button[type="submit"]')
+                                        ]);
+                                        await logLive('Authentication successful.', 'success');
+                                } catch (authErr) {
+                                        await logLive(`Auto-login failed: ${authErr.message}`, 'error');
+                                }
+                        } else {
+                                await logLive('Already authenticated by cached session.', 'info');
                         }
                 }
+
+                await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
+                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
