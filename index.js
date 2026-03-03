@@ -895,11 +895,30 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
                 }
 
-                if (targetUrl.includes('fluxmls')) {
-                        try {
-                                const debugHtml = await page.content();
-                                require('fs').writeFileSync('C:\\Users\\bensi\\Downloads\\Git hub Repository\\real-estate-mls\\scraper-api-microservice\\flux_dump.html', debugHtml);
-                        } catch (e) { }
+                // For FluxMLS, also extract agent info from the listing table
+                let fluxAgentMap = {};
+                if (isFlux) {
+                        fluxAgentMap = await page.evaluate(() => {
+                                const map = {};
+                                const rows = document.querySelectorAll('tr.model-item');
+                                for (const row of rows) {
+                                        const idSpan = row.querySelector('span.text-muted');
+                                        if (!idSpan || !idSpan.innerText.includes('FX')) continue;
+                                        const fxId = idSpan.innerText.trim();
+                                        const tds = row.querySelectorAll('td');
+                                        // TD[7] = Zone/Street, TD[8] = Agency/Agent
+                                        const agentTd = tds[8];
+                                        if (agentTd) {
+                                                const lines = agentTd.innerText.trim().split('\n').map(l => l.trim()).filter(l => l && l !== 'Agentie' && l !== 'Agent');
+                                                map[fxId] = {
+                                                        agency: lines[0] || '',
+                                                        agent: lines[1] || ''
+                                                };
+                                        }
+                                }
+                                return map;
+                        });
+                        await logLive(`Extracted agent info for ${Object.keys(fluxAgentMap).length} FluxMLS rows.`, 'info');
                 }
 
                 const propertyUrls = await page.evaluate((selector) => {
@@ -907,7 +926,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         let validUrls = [];
 
                         for (const el of links) {
-                                // For FluxMLS, the user wants us to scrape the `propertyshow` page based on the ID
+                                // For FluxMLS, scrape the `propertyshow` page based on the ID
                                 if (window.location.href.includes('fluxmls')) {
                                         const idSpan = el.querySelector('span.text-muted');
                                         if (idSpan && idSpan.innerText.includes('FX')) {
@@ -921,7 +940,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 let urlStr = el.getAttribute('data-url') || el.href || el.getAttribute('href');
                                 if (!urlStr || urlStr.includes('javascript:')) continue;
                                 try {
-                                        // Resolve relative URLs (like /approperties/123) against the base URL
                                         const resolved = new URL(urlStr, window.location.href).href;
                                         validUrls.push(resolved);
                                 } catch (e) { }
@@ -930,7 +948,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         let validHrefs = validUrls.filter(href => href && href.startsWith('http'));
 
                         if (window.location.href.includes('immoflux.ro') && !window.location.href.includes('fluxmls')) {
-                                // Strictly INCLUDE only valid property detail paths, explicitly excluding pagination
                                 validHrefs = validHrefs.filter(href =>
                                         (href.includes('/ap/slidepanel/') || href.includes('/approperties/') || (href.includes('/properties/') && href.includes('/slidepanel'))) &&
                                         !href.match(/\?page=\d+/)
@@ -1005,6 +1022,18 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 // Call a new lightweight Next.js api endpoint we are about to create specifically for this bridge:
                                 // POST /api/admin/headless-dynamic-import
                                 const nextjsBase = webhookBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Need actual host
+                                // For FluxMLS, inject agent data extracted from the listing table
+                                let extraAgentData = {};
+                                if (isFlux) {
+                                        const fxMatch = propUrl.match(/FX(\d+)/);
+                                        const fxId = fxMatch ? `FX${fxMatch[1]}` : '';
+                                        if (fluxAgentMap[fxId]) {
+                                                extraAgentData = {
+                                                        owner_name: `${fluxAgentMap[fxId].agent} (${fluxAgentMap[fxId].agency})`.trim(),
+                                                };
+                                        }
+                                }
+
                                 const parseReq = await fetch(`${nextjsBase}/api/admin/headless-dynamic-import`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
@@ -1012,7 +1041,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 url: propUrl,
                                                 selectors: extractSelectors,
                                                 html: rawHtml,
-                                                adminId: adminId
+                                                adminId: adminId,
+                                                extraData: extraAgentData
                                         })
                                 });
 
