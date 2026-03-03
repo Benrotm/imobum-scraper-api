@@ -812,6 +812,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
         // Send early 200 to NextJS caller 
         res.status(200).json({ status: 'Processing started in background' });
 
+        let browser = null;
         try {
                 // Construct target URL with pageNum
                 const targetUrl = categoryUrl.includes('?') ? `${categoryUrl}&page=${pageNum}` : `${categoryUrl}?page=${pageNum}`;
@@ -831,7 +832,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 // It requires the static Render IP that the user initiated the login session with.
                 // launchOptions.proxy injection is intentionally disabled here.
 
-                const browser = await chromium.launch(launchOptions);
+                browser = await chromium.launch(launchOptions);
 
                 const context = await browser.newContext({
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
