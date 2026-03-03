@@ -875,7 +875,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 }
 
                 await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
-                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.goto(targetUrl, { waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
 
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
@@ -940,7 +940,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         }
 
                         return Array.from(new Set(validHrefs));
-                }, linkSelector);
+                }, effectiveSelector);
 
                 await logLive(`Discovered ${propertyUrls.length} links on page limit.`, 'info');
 
