@@ -895,30 +895,62 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
                 }
 
-                // For FluxMLS, also extract agent info from the listing table
+                // For FluxMLS, extract agent info + slidepanel URLs from the listing table
                 let fluxAgentMap = {};
                 if (isFlux) {
-                        fluxAgentMap = await page.evaluate(() => {
-                                const map = {};
+                        const rawAgentData = await page.evaluate(() => {
+                                const results = [];
                                 const rows = document.querySelectorAll('tr.model-item');
                                 for (const row of rows) {
                                         const idSpan = row.querySelector('span.text-muted');
                                         if (!idSpan || !idSpan.innerText.includes('FX')) continue;
                                         const fxId = idSpan.innerText.trim();
                                         const tds = row.querySelectorAll('td');
-                                        // TD[7] = Zone/Street, TD[8] = Agency/Agent
                                         const agentTd = tds[8];
                                         if (agentTd) {
                                                 const lines = agentTd.innerText.trim().split('\n').map(l => l.trim()).filter(l => l && l !== 'Agentie' && l !== 'Agent');
-                                                map[fxId] = {
+                                                const agentSpan = agentTd.querySelector('span[data-toggle="slidePanel"]');
+                                                results.push({
+                                                        fxId,
                                                         agency: lines[0] || '',
-                                                        agent: lines[1] || ''
-                                                };
+                                                        agent: lines[1] || '',
+                                                        slidepanelUrl: agentSpan ? agentSpan.getAttribute('data-url') : ''
+                                                });
                                         }
                                 }
-                                return map;
+                                return results;
                         });
-                        await logLive(`Extracted agent info for ${Object.keys(fluxAgentMap).length} FluxMLS rows.`, 'info');
+
+                        // Fetch phone/email from each agent's slidepanel URL
+                        const cookieArray = await context.cookies();
+                        const ck = cookieArray.map(c => `${c.name}=${c.value}`).join('; ');
+
+                        for (const ag of rawAgentData) {
+                                fluxAgentMap[ag.fxId] = { agency: ag.agency, agent: ag.agent, phone: '', email: '' };
+
+                                if (ag.slidepanelUrl) {
+                                        try {
+                                                const panelRes = await fetch(ag.slidepanelUrl, {
+                                                        headers: { 'Cookie': ck, 'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest' }
+                                                });
+                                                const panelHtml = await panelRes.text();
+                                                // Extract phone after "Telefon" label
+                                                const phoneMatch = panelHtml.match(/Telefon\s*<\/\w+>\s*([^<]+)/i) || panelHtml.match(/Telefon\s*\n\s*([\+\d\s]+)/i);
+                                                if (phoneMatch && phoneMatch[1]) {
+                                                        const cleaned = phoneMatch[1].trim().replace(/\s/g, '');
+                                                        if (cleaned.length >= 10) fluxAgentMap[ag.fxId].phone = cleaned;
+                                                }
+                                                // Extract email
+                                                const emailMatch = panelHtml.match(/E-mail\s*<\/\w+>\s*([^<]+)/i) || panelHtml.match(/E-mail\s*\n\s*(\S+@\S+)/i);
+                                                if (emailMatch && emailMatch[1]) {
+                                                        fluxAgentMap[ag.fxId].email = emailMatch[1].trim();
+                                                }
+                                        } catch (e) { /* skip on failure */ }
+                                }
+                        }
+
+                        const withPhone = Object.values(fluxAgentMap).filter(a => a.phone).length;
+                        await logLive(`Extracted agent info for ${Object.keys(fluxAgentMap).length} FluxMLS rows (${withPhone} with phone).`, 'info');
                 }
 
                 const propertyUrls = await page.evaluate((selector) => {
@@ -1028,9 +1060,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         const fxMatch = propUrl.match(/FX(\d+)/);
                                         const fxId = fxMatch ? `FX${fxMatch[1]}` : '';
                                         if (fluxAgentMap[fxId]) {
+                                                const ag = fluxAgentMap[fxId];
                                                 extraAgentData = {
-                                                        owner_name: `${fluxAgentMap[fxId].agent} (${fluxAgentMap[fxId].agency})`.trim(),
+                                                        owner_name: `${ag.agent} (${ag.agency})`.trim(),
                                                 };
+                                                if (ag.phone) extraAgentData.owner_phone = ag.phone;
+                                                if (ag.email) extraAgentData.private_notes = `Agent email: ${ag.email}`;
                                         }
                                 }
 
