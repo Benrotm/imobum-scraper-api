@@ -773,7 +773,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
                 supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
                 immofluxUser, immofluxPass,
-                adminId
+                adminId, regionFilter
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
