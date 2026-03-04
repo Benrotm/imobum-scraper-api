@@ -896,29 +896,50 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
-                                        // The form data must be posted to the Properties index itself.
-                                        await page.evaluate(async ({ countyId, sUrl }) => {
-                                                const formData = new FormData();
-                                                formData.append('filter_county_id__eq', countyId.toString());
+                                        // Create a physical form to force the browser to navigate with the POST payload
+                                        await page.evaluate(({ countyId, tUrl }) => {
+                                                const form = document.createElement('form');
+                                                form.method = 'POST';
+                                                form.action = tUrl;
 
                                                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                                                if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+                                                if (csrfToken) {
+                                                        const csrfInput = document.createElement('input');
+                                                        csrfInput.type = 'hidden';
+                                                        csrfInput.name = '_token';
+                                                        csrfInput.value = csrfToken;
+                                                        form.appendChild(csrfInput);
+                                                }
 
-                                                await fetch(sUrl, { method: 'POST', body: formData, headers });
-                                        }, { countyId, sUrl: propUrl });
+                                                const filterInput = document.createElement('input');
+                                                filterInput.type = 'hidden';
+                                                filterInput.name = 'filter_county_id__eq';
+                                                filterInput.value = countyId.toString();
+                                                form.appendChild(filterInput);
 
-                                        await logLive(`Upstream region filter applied directly to URL targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
+                                                document.body.appendChild(form);
+                                                form.submit();
+                                        }, { countyId, tUrl: targetUrl });
+
+                                        // Wait for the form submission to complete navigation
+                                        await page.waitForNavigation({ waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
+
+                                        await logLive(`Upstream physical form submitted for '${regionFilter}' (ID: ${countyId}).`, 'success');
+                                        targetUrl = null; // Skip the upcoming page.goto because we just navigated locally
                                 } else {
-                                        await logLive(`Could not find an internal ID matching '${regionFilter}'. Filter URL append safely skipped.`, 'warn');
+                                        await logLive(`Could not find an internal ID matching '${regionFilter}'. Navigating cleanly natively.`, 'warn');
                                 }
                         } catch (e) {
-                                await logLive(`Failed to apply upstream region filter dynamically: ${e.message}`, 'warn');
+                                await logLive(`Failed to apply upstream physical region filter: ${e.message}`, 'warn');
                         }
                 }
 
-                await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
-                await page.goto(targetUrl, { waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
+                if (targetUrl) {
+                        await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
+                        await page.goto(targetUrl, { waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
+                } else {
+                        await logLive(`Extraction proceeding naturally from physical POST navigation.`, 'info');
+                }
 
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
