@@ -882,40 +882,34 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                 await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-                                const countyId = await page.evaluate(async ({ filterText, sUrl }) => {
-                                        let select = document.querySelector('select[name="filter_county_id__eq"]');
-                                        if (!select) {
-                                                const selects = Array.from(document.querySelectorAll('select'));
-                                                for (const s of selects) {
-                                                        if (s.name.includes('county') || s.name.includes('judet')) {
-                                                                select = s; break;
-                                                        }
-                                                }
-                                        }
+                                const countyMap = {
+                                        'alba': 1, 'arad': 2, 'arges': 3, 'bacau': 4, 'bihor': 5, 'bistrita-nasaud': 6,
+                                        'botosani': 7, 'braila': 9, 'brasov': 8, 'bucuresti': 10, 'bucharest': 10, 'buzau': 11, 'calarasi': 12,
+                                        'caras-severin': 13, 'cluj': 14, 'constanta': 15, 'covasna': 16, 'dambovita': 17,
+                                        'dolj': 18, 'galati': 19, 'giurgiu': 20, 'gorj': 21, 'harghita': 22, 'hunedoara': 23,
+                                        'ialomita': 24, 'iasi': 25, 'ilfov': 26, 'maramures': 27, 'mehedinti': 28, 'mures': 29,
+                                        'neamt': 30, 'olt': 31, 'prahova': 32, 'salaj': 33, 'satu mare': 34, 'sibiu': 35,
+                                        'suceava': 36, 'teleorman': 37, 'timis': 38, 'tulcea': 39, 'valcea': 40, 'vaslui': 41, 'vrancea': 42
+                                };
 
-                                        if (select) {
-                                                const options = Array.from(select.options);
-                                                const match = options.find(opt => opt.text.toLowerCase().includes(filterText.toLowerCase()));
-
-                                                if (match && match.value) {
-                                                        const formData = new FormData();
-                                                        formData.append(select.name, match.value);
-
-                                                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                                        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                                                        if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
-
-                                                        await fetch(sUrl, { method: 'POST', body: formData, headers });
-                                                        return match.value;
-                                                }
-                                        }
-                                        return null;
-                                }, { filterText: regionFilter, sUrl: searchUrl });
+                                const normalizedRegion = regionFilter.toLowerCase().normalize('NFC');
+                                const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
+                                        await page.evaluate(async ({ countyId, sUrl }) => {
+                                                const formData = new FormData();
+                                                formData.append('filter_county_id__eq', countyId.toString());
+
+                                                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                                                if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+
+                                                await fetch(sUrl, { method: 'POST', body: formData, headers });
+                                        }, { countyId, sUrl: searchUrl });
+
                                         await logLive(`Upstream region filter applied targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
                                 } else {
-                                        await logLive(`Could not find a dropdown option matching '${regionFilter}'. Filter not applied.`, 'warn');
+                                        await logLive(`Could not find an internal ID matching '${regionFilter}'. Filter POST not applied.`, 'warn');
                                 }
                         } catch (e) {
                                 await logLive(`Failed to apply upstream region filter dynamically: ${e.message}`, 'warn');
