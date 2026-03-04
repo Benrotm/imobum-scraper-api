@@ -815,7 +815,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
         let browser = null;
         try {
                 // Construct target URL with pageNum
-                const targetUrl = categoryUrl.includes('?') ? `${categoryUrl}&page=${pageNum}` : `${categoryUrl}?page=${pageNum}`;
+                let targetUrl = categoryUrl.includes('?') ? `${categoryUrl}&page=${pageNum}` : `${categoryUrl}?page=${pageNum}`;
                 await logLive(`Booting Chrome cluster... Target: ${targetUrl}`, 'info');
 
                 if (await isJobStopped()) {
