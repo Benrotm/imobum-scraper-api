@@ -927,8 +927,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         effectiveSelector = '.avatar-ap, a';
                         waitSelector = '.avatar-ap'; // Strictly wait for actual listing cards, not just sidebar <a> links
                 } else if (targetUrl.includes('fluxmls')) {
-                        effectiveSelector = 'tr.model-item';
-                        waitSelector = 'tr.model-item';
+                        effectiveSelector = 'tr:has(span.text-muted)';
+                        waitSelector = 'span.text-muted'; // Wait for IDs to load
                 }
 
                 try {
@@ -943,7 +943,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 if (isFlux) {
                         const rawAgentData = await page.evaluate(() => {
                                 const results = [];
-                                const rows = document.querySelectorAll('tr.model-item');
+                                const rows = document.querySelectorAll('tr'); // Target all rows and filter by FX
                                 for (const row of rows) {
                                         const idSpan = row.querySelector('span.text-muted');
                                         if (!idSpan || !idSpan.innerText.includes('FX')) continue;
