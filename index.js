@@ -896,8 +896,17 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
-                                        const queryChar = targetUrl.includes('?') ? '&' : '?';
-                                        targetUrl = `${targetUrl}${queryChar}filter_county_id__eq=${countyId}`;
+                                        // The form data must be posted to the Properties index itself.
+                                        await page.evaluate(async ({ countyId, sUrl }) => {
+                                                const formData = new FormData();
+                                                formData.append('filter_county_id__eq', countyId.toString());
+
+                                                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                                                if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+
+                                                await fetch(sUrl, { method: 'POST', body: formData, headers });
+                                        }, { countyId, sUrl: propUrl });
 
                                         await logLive(`Upstream region filter applied directly to URL targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
                                 } else {
