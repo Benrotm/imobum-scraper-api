@@ -944,10 +944,10 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
                 let waitSelector = linkSelector;
-                if (targetUrl.includes('immoflux.ro') && !targetUrl.includes('fluxmls')) {
+                if (isImmo) {
                         effectiveSelector = '.avatar-ap, a';
                         waitSelector = '.avatar-ap'; // Strictly wait for actual listing cards, not just sidebar <a> links
-                } else if (targetUrl.includes('fluxmls')) {
+                } else if (isFlux) {
                         effectiveSelector = 'tr:has(span.text-muted)';
                         waitSelector = 'span.text-muted'; // Wait for IDs to load
                 }
