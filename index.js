@@ -874,6 +874,54 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         }
                 }
 
+                if (regionFilter && (isFlux || isImmo)) {
+                        await logLive(`Applying upstream region filter: ${regionFilter}`, 'info');
+                        try {
+                                const propUrl = isFlux ? 'https://fluxmls.immoflux.ro/properties' : 'https://immoflux.ro/properties';
+                                const searchUrl = isFlux ? 'https://fluxmls.immoflux.ro/search' : 'https://immoflux.ro/search';
+
+                                await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+                                const countyId = await page.evaluate(async ({ filterText, sUrl }) => {
+                                        let select = document.querySelector('select[name="filter_county_id__eq"]');
+                                        if (!select) {
+                                                const selects = Array.from(document.querySelectorAll('select'));
+                                                for (const s of selects) {
+                                                        if (s.name.includes('county') || s.name.includes('judet')) {
+                                                                select = s; break;
+                                                        }
+                                                }
+                                        }
+
+                                        if (select) {
+                                                const options = Array.from(select.options);
+                                                const match = options.find(opt => opt.text.toLowerCase().includes(filterText.toLowerCase()));
+
+                                                if (match && match.value) {
+                                                        const formData = new FormData();
+                                                        formData.append(select.name, match.value);
+
+                                                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                                        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                                                        if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
+
+                                                        await fetch(sUrl, { method: 'POST', body: formData, headers });
+                                                        return match.value;
+                                                }
+                                        }
+                                        return null;
+                                }, { filterText: regionFilter, sUrl: searchUrl });
+
+                                if (countyId) {
+                                        await logLive(`Upstream region filter applied targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
+                                } else {
+                                        await logLive(`Could not find a dropdown option matching '${regionFilter}'. Filter not applied.`, 'warn');
+                                }
+                        } catch (e) {
+                                await logLive(`Failed to apply upstream region filter dynamically: ${e.message}`, 'warn');
+                        }
+                }
+
                 await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
                 await page.goto(targetUrl, { waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
 
