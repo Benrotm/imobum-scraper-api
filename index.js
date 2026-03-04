@@ -896,20 +896,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
-                                        await page.evaluate(async ({ countyId, sUrl }) => {
-                                                const formData = new FormData();
-                                                formData.append('filter_county_id__eq', countyId.toString());
+                                        const queryChar = targetUrl.includes('?') ? '&' : '?';
+                                        targetUrl = `${targetUrl}${queryChar}filter_county_id__eq=${countyId}`;
 
-                                                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                                                if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
-
-                                                await fetch(sUrl, { method: 'POST', body: formData, headers });
-                                        }, { countyId, sUrl: searchUrl });
-
-                                        await logLive(`Upstream region filter applied targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
+                                        await logLive(`Upstream region filter applied directly to URL targeting '${regionFilter}' (ID: ${countyId}).`, 'success');
                                 } else {
-                                        await logLive(`Could not find an internal ID matching '${regionFilter}'. Filter POST not applied.`, 'warn');
+                                        await logLive(`Could not find an internal ID matching '${regionFilter}'. Filter URL append safely skipped.`, 'warn');
                                 }
                         } catch (e) {
                                 await logLive(`Failed to apply upstream region filter dynamically: ${e.message}`, 'warn');
