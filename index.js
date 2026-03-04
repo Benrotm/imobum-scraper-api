@@ -877,11 +877,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 if (regionFilter && (isFlux || isImmo)) {
                         await logLive(`Applying upstream region filter: ${regionFilter}`, 'info');
                         try {
-                                const propUrl = isFlux ? 'https://fluxmls.immoflux.ro/properties' : 'https://immoflux.ro/properties';
-                                const searchUrl = isFlux ? 'https://fluxmls.immoflux.ro/search' : 'https://immoflux.ro/search';
-
-                                await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
                                 const countyMap = {
                                         'alba': 1, 'arad': 2, 'arges': 3, 'bacau': 4, 'bihor': 5, 'bistrita-nasaud': 6,
                                         'botosani': 7, 'braila': 9, 'brasov': 8, 'bucuresti': 10, 'bucharest': 10, 'buzau': 11, 'calarasi': 12,
@@ -896,36 +891,45 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
-                                        // Create a physical form to force the browser to navigate with the POST payload
-                                        await page.evaluate(({ countyId, tUrl }) => {
-                                                const form = document.createElement('form');
-                                                form.method = 'POST';
-                                                form.action = tUrl;
+                                        if (isFlux) {
+                                                const propUrl = 'https://fluxmls.immoflux.ro/properties';
+                                                await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-                                                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                                if (csrfToken) {
-                                                        const csrfInput = document.createElement('input');
-                                                        csrfInput.type = 'hidden';
-                                                        csrfInput.name = '_token';
-                                                        csrfInput.value = csrfToken;
-                                                        form.appendChild(csrfInput);
-                                                }
+                                                // Create a physical form to force the browser to navigate with the POST payload
+                                                await page.evaluate(({ countyId, tUrl }) => {
+                                                        const form = document.createElement('form');
+                                                        form.method = 'POST';
+                                                        form.action = tUrl;
 
-                                                const filterInput = document.createElement('input');
-                                                filterInput.type = 'hidden';
-                                                filterInput.name = 'filter_county_id__eq';
-                                                filterInput.value = countyId.toString();
-                                                form.appendChild(filterInput);
+                                                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                                                        if (csrfToken) {
+                                                                const csrfInput = document.createElement('input');
+                                                                csrfInput.type = 'hidden';
+                                                                csrfInput.name = '_token';
+                                                                csrfInput.value = csrfToken;
+                                                                form.appendChild(csrfInput);
+                                                        }
 
-                                                document.body.appendChild(form);
-                                                form.submit();
-                                        }, { countyId, tUrl: targetUrl });
+                                                        const filterInput = document.createElement('input');
+                                                        filterInput.type = 'hidden';
+                                                        filterInput.name = 'filter_county_id__eq';
+                                                        filterInput.value = countyId.toString();
+                                                        form.appendChild(filterInput);
 
-                                        // Wait for the form submission to complete navigation
-                                        await page.waitForNavigation({ waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
+                                                        document.body.appendChild(form);
+                                                        form.submit();
+                                                }, { countyId, tUrl: targetUrl });
 
-                                        await logLive(`Upstream physical form submitted for '${regionFilter}' (ID: ${countyId}).`, 'success');
-                                        targetUrl = null; // Skip the upcoming page.goto because we just navigated locally
+                                                // Wait for the form submission to complete navigation
+                                                await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 45000 });
+
+                                                await logLive(`Upstream physical form submitted for '${regionFilter}' (ID: ${countyId}).`, 'success');
+                                                targetUrl = null; // Skip the upcoming page.goto because we just navigated locally
+                                        } else if (isImmo) {
+                                                // Anunturi Particulari operates exclusively via HTTP GET parameters
+                                                targetUrl = `${targetUrl}&filter_county_id__eq=${countyId}&mode=list&firstload=1`;
+                                                await logLive(`Generated direct HTTP GET filter URL for AP: ${targetUrl}`, 'success');
+                                        }
                                 } else {
                                         await logLive(`Could not find an internal ID matching '${regionFilter}'. Navigating cleanly natively.`, 'warn');
                                 }
