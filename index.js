@@ -895,36 +895,50 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 const propUrl = 'https://fluxmls.immoflux.ro/properties';
                                                 await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-                                                // Create a physical form to force the browser to navigate with the POST payload
-                                                await page.evaluate(({ countyId, tUrl }) => {
-                                                        const form = document.createElement('form');
-                                                        form.method = 'POST';
-                                                        form.action = tUrl;
+                                                try {
+                                                        await logLive('Opening FluxMLS filter panel...', 'info');
+                                                        const filterBtn = 'a.btn-icon.btn-primary.btn-outline[href="#filter-wrapper"]';
+                                                        await page.waitForSelector(filterBtn, { timeout: 10000 });
+                                                        await page.click(filterBtn);
 
-                                                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                                                        if (csrfToken) {
-                                                                const csrfInput = document.createElement('input');
-                                                                csrfInput.type = 'hidden';
-                                                                csrfInput.name = '_token';
-                                                                csrfInput.value = csrfToken;
-                                                                form.appendChild(csrfInput);
+                                                        await logLive('Activating Judet dropdown...', 'info');
+                                                        const countySelectizeInput = 'select#filter-county-id-eq + .selectize-control .selectize-input input';
+                                                        await page.waitForSelector(countySelectizeInput, { timeout: 10000, state: 'visible' });
+                                                        await page.click(countySelectizeInput);
+
+                                                        // Wait for the dropdown to render properly
+                                                        await page.waitForTimeout(1000);
+
+                                                        await logLive(`Typing region: ${regionFilter}...`, 'info');
+                                                        await page.keyboard.type(regionFilter, { delay: 100 });
+
+                                                        // Give the search engine time to filter the options
+                                                        await page.waitForTimeout(1000);
+
+                                                        await logLive('Pressing Enter to commit filter...', 'info');
+
+                                                        // FluxMLS triggers an AJAX refresh immediately upon entry
+                                                        const responsePromise = page.waitForResponse(response =>
+                                                                response.url().includes('properties/filter') && response.status() === 200,
+                                                                { timeout: 15000 }
+                                                        ).catch(() => null);
+
+                                                        await page.keyboard.press('Enter');
+
+                                                        const ajaxRes = await responsePromise;
+                                                        if (ajaxRes) {
+                                                                await logLive(`FluxMLS AJAX refresh confirmed for ${regionFilter}.`, 'success');
+                                                        } else {
+                                                                await logLive('AJAX refresh not detected. Assuming native state transition.', 'warn');
                                                         }
 
-                                                        const filterInput = document.createElement('input');
-                                                        filterInput.type = 'hidden';
-                                                        filterInput.name = 'filter_county_id__eq';
-                                                        filterInput.value = countyId.toString();
-                                                        form.appendChild(filterInput);
+                                                        // Wait another 1.5 seconds for DOM tr rendering to complete
+                                                        await page.waitForTimeout(1500);
 
-                                                        document.body.appendChild(form);
-                                                        form.submit();
-                                                }, { countyId, tUrl: targetUrl });
-
-                                                // Wait for the form submission to complete navigation
-                                                await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 45000 });
-
-                                                await logLive(`Upstream physical form submitted for '${regionFilter}' (ID: ${countyId}).`, 'success');
-                                                targetUrl = null; // Skip the upcoming page.goto because we just navigated locally
+                                                        targetUrl = null; // Skip upcoming page.goto since we are natively filtered
+                                                } catch (guiError) {
+                                                        throw new Error(`GUI Interaction failed: ${guiError.message}`);
+                                                }
                                         } else if (isImmo) {
                                                 // Anunturi Particulari operates exclusively via HTTP GET parameters
                                                 targetUrl = `${targetUrl}&filter_county_id__eq=${countyId}&mode=list&firstload=1`;
