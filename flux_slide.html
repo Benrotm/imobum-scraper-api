@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flux MLS</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <meta name="csrf-token" content="svgWK3ZQ3epzRsiLZUnje7jDqVagiHqhhZnJaKJB">
+    <meta name="lang" content="">
+        <meta name="pusher" content="aa386dc6d6fe977c2afa">
+
+    <link rel="icon" type="image/x-icon" href="https://fluxmls.immoflux.ro/favicon2.ico"/>
+    
+
+    <link href="https://fluxmls.immoflux.ro/css/vendors.css?v=1.2" rel="stylesheet">
+    <link href="https://fluxmls.immoflux.ro/css/site.css?v=1.43" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link href="https://fluxmls.immoflux.ro/fonts/font-awesome/font-awesome.min.css" rel="stylesheet" type="text/css" id="fontawesome_style">
+    <link href="https://fluxmls.immoflux.ro/fonts/web-icons/web-icons.min.css" rel="stylesheet" type="text/css">
+
+    <link href="https://fluxmls.immoflux.ro/fonts/themify/themify.min.css" rel="stylesheet" type="text/css">
+
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+    <script src="https://fluxmls.immoflux.ro/vendor/html5shiv/html5shiv.min.js"></script>
+    <![endif]-->
+
+    <!--[if lt IE 10]>
+    <script src="https://fluxmls.immoflux.ro/vendor/media-match/media.match.min.js"></script>
+    <script src="https://fluxmls.immoflux.ro/vendor/respond/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Scripts -->
+    <script src="https://fluxmls.immoflux.ro/vendor/modernizr/modernizr.js"></script>
+
+    <script src="https://fluxmls.immoflux.ro/vendor/breakpoints/breakpoints.js"></script>
+    <script>
+        Breakpoints();
+    </script>
+</head>
+
+
+<body class="page-login layout-full" data-background="https://fluxmls.immoflux.ro/images/backgrounds/login-mls.jpg">
+
+
+<!-- Page -->
+<div class="page animsition vertical-align text-center" data-animsition-in="fade-in"
+     data-animsition-out="fade-out">
+
+    <div class="page-content vertical-align-middle">
+
+        <div class="brand">
+           <a href="/"> <img class="brand-img" src="https://fluxmls.immoflux.ro/images/logo.png" alt="Immo Flux">
+            <h2 class="brand-text">ImmoFlux MLS</h2>
+           </a>
+        </div>
+
+
+        
+            <p>Conecteaza-te la contul tau</p>
+            
+            <form method="post" action="https://fluxmls.immoflux.ro/login">
+                <input type="hidden" name="_token" value="svgWK3ZQ3epzRsiLZUnje7jDqVagiHqhhZnJaKJB">
+
+                <div class="form-group">
+                    <label class="sr-only" for="inputEmail">E-mail</label>
+                    <input type="email" class="form-control" id="inputEmail" name="email" placeholder="Email" value="">
+                </div>
+
+                <div class="form-group">
+
+
+
+                    <label class="sr-only" for="inputPassword">Parola</label>
+                    <input type="password" class="form-control" id="inputPassword" name="password"
+                           placeholder="Password">
+                </div>
+                <div class="form-group clearfix">
+                    <div class="checkbox-custom checkbox-inline checkbox-primary pull-left">
+                        <input type="checkbox" id="inputCheckbox" name="remember">
+                        <label for="inputCheckbox">Memoreaza datele</label>
+                    </div>
+                    <a class="pull-right" href="https://fluxmls.immoflux.ro/password/reset">Parola uitata ?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Conectare</button>
+            </form>
+            
+
+
+
+
+
+        <footer class="page-copyright">
+
+            <p>© 2026 ImmoFlux MLS</p>
+            <div class="social">
+                <a href="javascript:void(0)">
+                    <i class="icon bd-twitter" aria-hidden="true"></i>
+                </a>
+                <a href="javascript:void(0)">
+                    <i class="icon bd-facebook" aria-hidden="true"></i>
+                </a>
+
+            </div>
+        </footer>
+
+    </div>
+</div>
+<!-- End Page -->
+
+
+
+<script src="https://js.pusher.com/4.1/pusher.min.js"></script>
+<script src="https://fluxmls.immoflux.ro/js/all.js?v=1.43"></script>
+<script src="https://fluxmls.immoflux.ro/vendor/tinymce/tinymce.min.js"></script>
+<link rel="stylesheet" href="https://fluxmls.immoflux.ro/vendor/blueimp/css/blueimp-gallery.css">
+<script src="https://fluxmls.immoflux.ro/vendor/blueimp/js/jquery.blueimp-gallery.min.js" charset="utf-8"></script>
+
+
+
+<script>
+    (function(document, window, $) {
+        'use strict';
+
+        var Site = window.Site;
+        $(document).ready(function() {
+            Site.run();
+        });
+
+    })(document, window, jQuery);
+
+
+</script>
+
+
+
+
+<div id="blueimp-gallery" class="blueimp-gallery" data-start-slideshow="true">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <ol class="indicator"></ol>
+</div>
+
+
+<div class="fullscreener hidden" id="fullscreener">
+
+    <div class="site-action">
+        <button type="button" class="btn  btn-floating btn-default fullscreenclose" aria-hidden="true">
+            <i class="icon ti-close" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="fullscreener-nav">
+            <button type="button" data-iresize="1200" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-desktop" aria-hidden="true"></button>
+            <button type="button" data-iresize="600" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-tablet" aria-hidden="true"></button>
+            <button type="button" data-iresize="320" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-mobile" aria-hidden="true"></button>
+            <div class="lang-switch-nav"> <a href="#" class="language-switch" data-langswitch="ro"> <span class="flag-icon flag-icon-ro"></span></a> <a href="#" class="language-switch" data-langswitch="en"> <span class="flag-icon flag-icon-gb"></span></a></div>
+        </div>
+
+
+    </div>
+
+    <div id="iframediv"></div>
+</div><div id="elfinderpath" data-url="https://fluxmls.immoflux.ro/elfinder/tinymce4"></div>
+
+
+</body>
+</html>

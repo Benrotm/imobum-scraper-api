@@ -1147,12 +1147,19 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 const ag = fluxAgentMap[fxId];
                                                 extraAgentData = {
                                                         owner_name: `${ag.agent} (${ag.agency})`.trim(),
+                                                        features: ['Open to Collaboration'] // Force inject this tag for all FluxMLS properties
                                                 };
                                                 if (ag.phone) extraAgentData.owner_phone = ag.phone;
                                                 if (ag.email) extraAgentData.private_notes = `Agent email: ${ag.email}`;
+                                        } else {
+                                                // Even if we lack specific agent data from the index page, ensure the feature is applied!
+                                                extraAgentData = {
+                                                        features: ['Open to Collaboration']
+                                                };
                                         }
                                 }
 
+                                await logLive(`[DEBUG] Sending property ${propUrl} to NextJS API with extraData: ${JSON.stringify(extraAgentData)}`, 'info');
                                 const parseReq = await fetch(`${nextjsBase}/api/admin/headless-dynamic-import`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },

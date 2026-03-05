@@ -1,0 +1,2860 @@
+<!DOCTYPE html><html class="js flexbox canvas canvastext webgl no-touch geolocation postmessage websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths tablesaw-enhanced fixedsticky-withoutfixedfixed js-menubar pusher" style=""><head><script type="text/javascript" async="" src="https://www.googletagmanager.com/gtag/js?id=G-MMKWJSWS1M&amp;cx=c&amp;_slc=1"></script><style type="text/css">/* style.css */</style>
+    <title>Flux MLS</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <meta name="csrf-token" content="J91hYV2gWIqy6eE59x6Sd057aR6VziVIGGzpX8JH">
+    <meta name="lang" content="">
+            <meta name="user" content="221">
+        <meta name="pusher" content="aa386dc6d6fe977c2afa">
+
+    <link rel="icon" type="image/x-icon" href="https://fluxmls.immoflux.ro/favicon2.ico">
+    
+
+    <link href="https://fluxmls.immoflux.ro/css/vendors.css?v=1.2" rel="stylesheet">
+    <link href="https://fluxmls.immoflux.ro/css/site.css?v=1.43" rel="stylesheet">
+
+    <!-- Fonts -->
+    <link href="https://fluxmls.immoflux.ro/fonts/font-awesome/font-awesome.min.css" rel="stylesheet" type="text/css" id="fontawesome_style">
+    <link href="https://fluxmls.immoflux.ro/fonts/web-icons/web-icons.min.css" rel="stylesheet" type="text/css">
+
+    <link href="https://fluxmls.immoflux.ro/fonts/themify/themify.min.css" rel="stylesheet" type="text/css">
+
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+    <script src="https://fluxmls.immoflux.ro/vendor/html5shiv/html5shiv.min.js"></script>
+    <![endif]-->
+
+    <!--[if lt IE 10]>
+    <script src="https://fluxmls.immoflux.ro/vendor/media-match/media.match.min.js"></script>
+    <script src="https://fluxmls.immoflux.ro/vendor/respond/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Scripts -->
+    <script async="" src="https://www.google-analytics.com/analytics.js"></script><script src="https://fluxmls.immoflux.ro/vendor/modernizr/modernizr.js"></script>
+
+    <script src="https://fluxmls.immoflux.ro/vendor/breakpoints/breakpoints.js"></script>
+    <script>
+        Breakpoints();
+    </script>
+<style type="text/css"></style></head>
+<body class="site-menubar-unfold">
+
+<nav class="site-navbar navbar navbar-default navbar-fixed-top navbar-mega site-navbar-2022" role="navigation">
+
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle hamburger hamburger-close navbar-toggle-left hided unfolded" data-toggle="menubar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="hamburger-bar"></span>
+        </button>
+        <button type="button" class="navbar-toggle collapsed" data-target="#site-navbar-collapse" data-toggle="collapse">
+            <i class="icon wb-more-horizontal" aria-hidden="true"></i>
+        </button>
+        <div class="navbar-brand navbar-brand-center site-gridmenu-toggle" data-toggle="gridmenu">
+            <img class="navbar-brand-logo" src="https://fluxmls.immoflux.ro/images/logo.png" title="Immo Flux">
+            <span class="navbar-brand-text navbar-brand-2022">ImmoFlux MLS</span>
+        </div>
+        
+                
+            
+            
+        
+    </div>
+
+    <div class="navbar-container container-fluid">
+        <!-- Navbar Collapse -->
+        <div class="collapse navbar-collapse navbar-collapse-toolbar" id="site-navbar-collapse">
+            <!-- Navbar Toolbar -->
+            <ul class="nav navbar-toolbar">
+                
+                    
+                        
+                            
+                            
+                        
+                    
+                
+
+
+                
+                    
+                        
+                    
+                
+
+                <li class="top-search">
+                    <form role="search" action="https://fluxmls.immoflux.ro/search" method="get">
+                        <div class="input-search">
+                            <span class="twitter-typeahead" style="position: relative; display: inline-block;"><input data-plugin="typeheadajax" data-url="https://fluxmls.immoflux.ro/searchahead" type="text" class="form-control round initiated tt-hint" readonly="" autocomplete="off" spellcheck="false" tabindex="-1" style="position: absolute; top: 0px; left: 0px; border-color: transparent; box-shadow: none; opacity: 1; background: none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255);" dir="ltr"><input data-plugin="typeheadajax" name="q" data-url="https://fluxmls.immoflux.ro/searchahead" type="text" class="form-control round initiated tt-input" placeholder="Cauta" autocomplete="off" spellcheck="false" dir="auto" style="position: relative; vertical-align: top; background-color: transparent;"><pre aria-hidden="true" style="position: absolute; visibility: hidden; white-space: pre; font-family: Poppins, sans-serif; font-size: 13px; font-style: normal; font-variant: normal; font-weight: 400; word-spacing: 0px; letter-spacing: 0px; text-indent: 0px; text-rendering: auto; text-transform: none;"></pre><div class="tt-menu" style="position: absolute; top: 100%; left: 0px; z-index: 100; display: none;"><div class="tt-dataset tt-dataset-search"></div></div></span>
+                            <button type="submit" class="input-search-btn">
+                                <i class="icon wb-search" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </form>
+                </li>
+
+                <li class="dropdown hidden-xs">
+
+                    <a data-toggle="dropdown" href="javascript:void(0)" data-href="javascript:void(0)" type="button" class="dropdown-toggle" data-url="http://realadmin.app/ro/journal/slidepanel/create"><i class="ti-plus" aria-hidden="true"></i> Adauga</a>
+
+
+                    <ul class="dropdown-menu" role="menu">
+
+
+
+
+
+
+
+                                                <li role="presentation">
+                            <a href="https://fluxmls.immoflux.ro/properties/create" role="menuitem">
+                                <span class="ti-home"></span> Proprietate</a>
+                        </li>
+                        
+                                                <li role="presentation">
+                            <a href="https://fluxmls.immoflux.ro/requests/create" role="menuitem">
+                                <span class="ti-location-pin"></span> Cerere</a>
+                        </li>
+                        
+
+
+
+
+
+
+
+
+                    </ul>
+                </li>
+                
+                    
+                       
+                        
+                    
+                
+
+            </ul>
+            <!-- End Navbar Toolbar -->
+
+            <!-- Navbar Toolbar Right -->
+            <ul class="nav navbar-toolbar navbar-right navbar-toolbar-right">
+
+                <li id="toppinsbutton" class="dropdown toppins site-pins" data-url="https://fluxmls.immoflux.ro/pins">
+
+    <a data-toggle="dropdown" href="javascript:void(0)" title="Pins" aria-expanded="false" data-animation="scale-up" role="button">
+        <i class="icon ti-pin-alt" aria-hidden="true"></i>
+        <span class="badge badge-info up hidden">0</span>
+    </a>
+
+    <ul class="dropdown-menu dropdown-menu-right dropdown-menu-media" role="menu">
+        <li class="list-group">
+            <div data-role="container">
+                <div data-role="content" class="site-pins-items">
+                                    </div>
+            </div>
+        </li>
+
+        <li class="dropdown-menu-footer site-pins-menu hidden" role="presentation">
+            <div class="btn-group btn-group-justified">
+                <div class="btn-group" role="group">
+                    <a href="https://fluxmls.immoflux.ro/pins" class="btn">
+                        <i class="icon ti-layers-alt" aria-hidden="true"></i> Afiseaza
+                    </a>
+                </div>
+                <div class="btn-group" role="group">
+                    <a type="button" class="btn btn-delete-pins">
+                        <i class="icon ti-trash" aria-hidden="true"></i> Sterge
+                    </a>
+                </div>
+            </div>
+        </li>
+
+    </ul>
+</li>
+
+                <li class="dropdown">
+
+    <a id="notification_icon" data-toggle="dropdown" href="javascript:void(0)" title="Notifications" aria-expanded="false" data-animation="scale-up" role="button">
+        <i class="icon wb-bell" aria-hidden="true"></i>
+                    <span class="badge badge-danger up hidden" id="nr_notification_count">0</span>
+    </a>
+
+    <div id="keepalive" class="hidden" data-time="1772665015" data-url="https://fluxmls.immoflux.ro/keepalive" data-interval="515000"></div>
+
+
+    <ul class="dropdown-menu dropdown-menu-right dropdown-menu-media" role="menu">
+        
+            
+            
+        
+
+        <li class="list-group">
+            <div data-role="container">
+                <div data-role="content" id="front_notifications">
+                                        
+                </div>
+            </div>
+        </li>
+            </ul>
+</li>                
+
+
+                <li class="dropdown">
+    <a class="navbar-avatar dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false" data-animation="scale-up" role="button">
+              <span class="avatar">
+                                        <span class="avatar-initials">AN</span>
+                   
+              </span>
+    </a>
+    <ul class="dropdown-menu" role="menu">
+                <li role="presentation">
+            <a href="https://fluxmls.immoflux.ro/agents/2512/edit" role="menuitem"><i class="icon wb-user" aria-hidden="true"></i> Profile</a>
+        </li>
+                
+            
+        
+        
+            
+        
+        
+        <li role="presentation">
+            <a href="https://fluxmls.immoflux.ro/auth/logout" role="menuitem"><i class="icon wb-power" aria-hidden="true"></i> Logout</a>
+        </li>
+    </ul>
+</li>
+                <li class="dropdown">
+
+    <a data-toggle="dropdown" href="javascript:void(0)" title="Suport" aria-expanded="false" data-animation="scale-up" role="button">
+        <i class="icon fa-support" aria-hidden="true"></i>
+    </a>
+
+
+    <ul class="dropdown-menu" role="menu">
+
+            
+                
+            
+
+        <li role="presentation">
+            <a href="https://immoflux.ro/suport-crm-imobiliare/" target="_blank" role="menuitem"><i class="icon fa-support" aria-hidden="true"></i> Ajutor</a>
+        </li>
+
+
+
+        
+        
+        
+        
+        
+        
+        
+    </ul>
+</li>
+
+
+
+
+                
+                    
+                        
+                    
+                
+
+            </ul>
+            <!-- End Navbar Toolbar Right -->
+        </div>
+        <!-- End Navbar Collapse -->
+
+        
+        
+            
+                
+                    
+                        
+                        
+                        
+                                
+                    
+                
+            
+        
+        
+    </div>
+</nav><!-- Left menu -->
+<div id="site-menu-bar" class="site-menubar no-print ">
+    <div class="site-menubar-body scrollable scrollable-inverse is-enabled scrollable-vertical" style="position: relative;">
+        <div class="scrollable-container" style="height: 599px; width: 260px;">
+            <div class="scrollable-content" style="width: 260px;">
+                <ul class="site-menu">
+                    
+
+                    
+
+                        <li class="site-menu-item   ">
+                            <a href="https://fluxmls.immoflux.ro" class="">
+                                <i class=" site-menu-icon ti-dashboard" aria-hidden="true"></i>
+                                <span class="site-menu-title">Dashboard</span>
+                                
+
+
+                                
+                                
+                                
+
+                                
+
+                                                            </a>
+
+                            
+                        </li>
+                    
+
+                        <li class="site-menu-item active  ">
+                            <a href="https://fluxmls.immoflux.ro/properties" class="">
+                                <i class="cyan-600 site-menu-icon ti-home" aria-hidden="true"></i>
+                                <span class="site-menu-title">Proprietati</span>
+                                
+
+
+                                
+                                
+                                
+
+                                
+
+                                                            </a>
+
+                            
+                        </li>
+                    
+
+                        <li class="site-menu-item   ">
+                            <a href="https://fluxmls.immoflux.ro/requests" class="">
+                                <i class="teal-600 site-menu-icon ti-location-pin" aria-hidden="true"></i>
+                                <span class="site-menu-title">Cereri</span>
+                                
+
+
+                                
+                                
+                                
+
+                                
+
+                                                            </a>
+
+                            
+                        </li>
+                    
+
+                        <li class="site-menu-item   ">
+                            <a href="https://fluxmls.immoflux.ro/agents" class="">
+                                <i class=" site-menu-icon ti-user" aria-hidden="true"></i>
+                                <span class="site-menu-title">Agenti</span>
+                                
+
+
+                                
+                                
+                                
+
+                                
+
+                                                            </a>
+
+                            
+                        </li>
+                    
+
+
+                </ul>
+
+
+                
+
+            </div>
+        </div>
+    <div class="scrollable-bar scrollable-bar-vertical scrollable-bar-hide is-disabled" draggable="false"><div class="scrollable-bar-handle"></div></div></div>
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- END Left menu -->
+<!-- Page -->
+<div class="page">
+                                 
+    <div class="site-action">
+
+                                    <a href="https://fluxmls.immoflux.ro/properties/create" data-href="https://fluxmls.immoflux.ro/properties/create" type="button" class="btn btn-floating btn-success" data-type="gotourl" data-tooltip="true" data-placement="top" data-original-title="Adauga"><i class="icon ti-plus" aria-hidden="true"></i></a>
+            
+                            <a href="#" data-href="#" type="button" class="btn btn-floating btn-danger" data-type="deletemulti" data-target="#filter-result" data-tooltip="true" data-placement="top" data-original-title="Sterge" style="display: none;"><i class="icon ti-trash" aria-hidden="true"></i></a>
+            
+            <div class="btn-group dropup">
+                <button type="button" class="btn btn-floating btn-info dropdown-toggle" id="dropdown-more" data-toggle="dropdown" aria-expanded="false"><i class="icon ti-more-alt" aria-hidden="true"></i></button>
+
+                <ul class="dropdown-menu bullet dropdown-menu-right" aria-labelledby="dropdown-more" role="menu">
+
+                    <li role="presentation">
+                        <a href="javascript:void(0)" role="menuitem" data-toggle="slidePanelData" data-form="table-form" data-url="https://fluxmls.immoflux.ro/properties/proposetorequest">
+                            <i class="icon ti-share" aria-hidden="true"></i>
+                            Propune proprietati</a>
+                    </li>
+
+                    
+                </ul>
+            </div>
+        
+        
+        
+    </div>
+
+    <div class="page-header">
+        <h1 class="page-title">Proprietati
+                            <a href="https://fluxmls.immoflux.ro/properties/create" data-href="https://fluxmls.immoflux.ro/properties/create" type="button" class="btn btn-icon btn-success btn-sm btn-sm"><i class="ti-plus" aria-hidden="true"></i> Adauga</a>
+            
+
+        </h1>
+        <div class="page-header-actions">
+
+            <a target="_blank" href="https://fluxmls.immoflux.ro/reguli" type="button" class="btn btn-info btn-sm btn-sm btn-outline">Reguli MLS</a>
+
+                            <a href="#" type="button" data-mine="only_mine" class="btn btn-icon btn-warning btn-outline btn-sm btn-round" data-tooltip="true" data-placement="top" data-original-title="Doar obiectele mele"><i class="ti ti-tag"></i></a>
+            
+            <a href="#filter-wrapper" data-href="#filter-wrapper" type="button" class="btn btn-icon btn-primary btn-outline btn-sm btn-round active" data-type="filterbutton" data-tooltip="true" data-placement="top" data-original-title="Filtreaza"><i class="ti-filter" aria-hidden="true"></i></a>
+            
+
+
+            <a href="#" data-href="#" type="button" class="btn btn-icon btn-outline btn-sm btn-round btn-info" data-toggle="slidePanelData" data-form="table-form" data-url="https://fluxmls.immoflux.ro/properties/proposetorequest" data-tooltip="true" data-placement="top" data-original-title="Propune" style="display: inline-block;"><i class="icon ti-share" aria-hidden="true"></i></a>
+
+            
+
+            
+            
+            
+            
+            
+            
+            
+
+            
+
+            
+            
+
+                                        <a href="#" data-href="#" type="button" class="btn btn-icon btn-danger btn-outline btn-sm btn-round" data-style="zoom-in" data-type="deletemulti" data-target="#filter-result" data-tooltip="true" data-placement="top" data-original-title="Sterge" style="display: none;"><i class="ti-trash" aria-hidden="true"></i></a>
+                                </div>
+    </div>
+
+
+
+    
+
+
+
+    <div class="page-content">
+
+                
+        <div class="panel collapse in" id="filter-wrapper" aria-expanded="true" style="">
+            <div class="panel-body">
+                <form id="filter" data-href="https://fluxmls.immoflux.ro/properties/filter" data-filtered="1" data-filterview="https://fluxmls.immoflux.ro/filterview">
+                    <div class="panel-heading">
+                        <div class="nav-tabs-horizontal">
+                            <ul class="nav nav-tabs nav-tabs-line" data-plugin="nav-tabs" role="tablist">
+                                <li class="active" role="presentation"><a data-toggle="tab" data-cat="0" href="javascript:void(0)" role="tab" aria-expanded="true">Toate</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="1" href="javascript:void(0)" role="tab" aria-expanded="false">Apartamente</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="2" href="javascript:void(0)" role="tab" aria-expanded="false">Case/vile</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="3" href="javascript:void(0)" role="tab" aria-expanded="false">Teren</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="4" href="javascript:void(0)" role="tab" aria-expanded="false">Spatiu birou</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="5" href="javascript:void(0)" role="tab" aria-expanded="false">Spatiu comercial</a></li>
+                                <li role="presentation" class=""><a data-toggle="tab" data-cat="6" href="javascript:void(0)" role="tab" aria-expanded="false">Spatiu industrial</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="panel-actions">
+
+                            <a href="javascript:void(0)" type="button" class="btn btn-icon btn-default btn-outline btn-sm btn-round" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/searches/settings/properties" data-tooltip="true" data-placement="bottom" data-original-title="Setari"><i class="icon ti-settings" aria-hidden="true"></i></a>
+                            <a id="pfilter-cleaner" href="#" data-href="#" type="button" class="btn btn-icon btn-default btn-outline btn-sm btn-round" data-type="filter-cleaner2" data-tooltip="true" data-placement="bottom" data-original-title="Clear filter"><i class="ti-close" aria-hidden="true"></i></a>
+
+                        </div>
+                    </div>
+
+
+
+                    <div id="filter-switcher">
+                        <input class="form-control" type="hidden" name="cat" value="0">
+<div class="row">
+    <div class="col-sm-3">
+        <label>Categoria</label>
+          <input type="hidden" name="category_id" value=""><select class="form-control bs-select-hidden" data-plugin="selectpicker" id="category_id" name="category_id"><option value=" "> - </option><option value="1">Apartament</option><option class="blue-grey-400" value="101">&nbsp;&nbsp;&nbsp;&nbsp;- Apartament</option><option class="blue-grey-400" value="102">&nbsp;&nbsp;&nbsp;&nbsp;- Garsoniera</option><option class="blue-grey-400" value="103">&nbsp;&nbsp;&nbsp;&nbsp;- Penthouse</option><option value="2">Casa / Vila</option><option class="blue-grey-400" value="201">&nbsp;&nbsp;&nbsp;&nbsp;- Individuala</option><option class="blue-grey-400" value="202">&nbsp;&nbsp;&nbsp;&nbsp;- Duplex</option><option class="blue-grey-400" value="203">&nbsp;&nbsp;&nbsp;&nbsp;- Triplex</option><option class="blue-grey-400" value="204">&nbsp;&nbsp;&nbsp;&nbsp;- Case insiruite</option><option class="blue-grey-400" value="205">&nbsp;&nbsp;&nbsp;&nbsp;- Calcan</option><option class="blue-grey-400" value="206">&nbsp;&nbsp;&nbsp;&nbsp;- Curte comuna</option><option value="3">Teren</option><option class="blue-grey-400" value="301">&nbsp;&nbsp;&nbsp;&nbsp;- Constructii</option><option class="blue-grey-400" value="302">&nbsp;&nbsp;&nbsp;&nbsp;- Agricol</option><option class="blue-grey-400" value="303">&nbsp;&nbsp;&nbsp;&nbsp;- Padure</option><option value="4">Spatiu birou</option><option value="5">Spatiu comercial</option><option value="6">Spatiu industrial</option><option value="7">Hotel / Pensiune</option><option class="blue-grey-400" value="701">&nbsp;&nbsp;&nbsp;&nbsp;- Hotel</option><option class="blue-grey-400" value="702">&nbsp;&nbsp;&nbsp;&nbsp;- Pensiune</option></select><div class="btn-group bootstrap-select form-control"><button type="button" class="btn dropdown-toggle btn-select" data-toggle="dropdown" data-id="category_id" title="-"><span class="filter-option pull-left"> - </span>&nbsp;<span class="bs-caret"><span class="caret"></span></span></button><div class="dropdown-menu open"><ul class="dropdown-menu inner" role="menu"><li data-original-index="0" class="selected"><a tabindex="0" class="" style="" data-tokens="null"><span class="text"> - </span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="1"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Apartament</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="2"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Apartament</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="3"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Garsoniera</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="4"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Penthouse</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="5"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Casa / Vila</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="6"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Individuala</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="7"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Duplex</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="8"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Triplex</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="9"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Case insiruite</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="10"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Calcan</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="11"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Curte comuna</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="12"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Teren</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="13"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Constructii</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="14"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Agricol</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="15"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Padure</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="16"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Spatiu birou</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="17"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Spatiu comercial</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="18"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Spatiu industrial</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="19"><a tabindex="0" class="" style="" data-tokens="null"><span class="text">Hotel / Pensiune</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="20"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Hotel</span><span class="icon wb-check check-mark"></span></a></li><li data-original-index="21"><a tabindex="0" class="blue-grey-400" style="" data-tokens="null"><span class="text">&nbsp;&nbsp;&nbsp;&nbsp;- Pensiune</span><span class="icon wb-check check-mark"></span></a></li></ul></div></div>
+    </div>
+
+    <div class="col-sm-3">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Tranzactie</label>
+                <select class="form-control  selectized" data-plugin="selectize" id="filter-transaction-id-in" name="filter_transaction_id__in[]" multiple="multiple" tabindex="-1" style="display: none;"></select><div class="selectize-control form-control multi plugin-drag_drop plugin-remove_button"><div class="selectize-input items not-full has-options ui-sortable"><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown multi form-control plugin-drag_drop plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+            </div>
+
+            <div class="form-group col-sm-6">
+                <label>Stare</label>
+                
+                <select class="form-control  selectized" data-plugin="selectize" id="filter-status-eq" name="filter_status__eq" tabindex="-1" style="display: none;"><option value="1" selected="selected">Activa</option></select><div class="selectize-control form-control single plugin-drag_drop plugin-remove_button"><div class="selectize-input items full has-options has-items"><div data-value="1" class="item">Activa</div><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown single form-control plugin-drag_drop plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-3">
+        <label>Agentie</label>
+        <input type="hidden" name="filter_agency_id__in[]"><select class="form-control selectized" data-plugin="selectize" id="filter-agency-id-in" name="filter_agency_id__in[]" multiple="multiple" tabindex="-1" style="display: none;"></select><div class="selectize-control form-control multi plugin-drag_drop plugin-remove_button"><div class="selectize-input items not-full has-options ui-sortable"><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown multi form-control plugin-drag_drop plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+    </div>
+
+
+    <div class="col-sm-3">
+        <label>Agent</label>
+        <input type="hidden" name="filter_agent_id__in[]"><select class="form-control selectized" data-plugin="selectize" id="filter-agent-id-in" name="filter_agent_id__in[]" multiple="multiple" tabindex="-1" style="display: none;"></select><div class="selectize-control form-control multi plugin-drag_drop plugin-remove_button"><div class="selectize-input items not-full has-options ui-sortable"><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown multi form-control plugin-drag_drop plugin-remove_button" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="form-group col-sm-3">
+        <label>Judet</label>
+                <select class="form-control selectized" data-plugin="selectize-counties" id="filter-county-id-eq" name="filter_county_id__eq" tabindex="-1" style="display: none;"><option value="" selected="selected"></option></select><div class="selectize-control form-control single"><div class="selectize-input items not-full has-options"><input type="text" autocomplete="off" tabindex="" placeholder=" - " style="width: 18px;"></div><div class="selectize-dropdown single form-control" style="display: none; width: 203px; top: 34px; left: 0px;"><div class="selectize-dropdown-content"></div></div></div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label>Oras</label>
+                        <select class="form-control selectized" data-plugin="selectize-cities" data-url="https://fluxmls.immoflux.ro/helper/cities" id="filter-city-id-eq" name="filter_city_id__eq" tabindex="-1" style="display: none;"><option value="" selected="selected"></option></select><div class="selectize-control form-control single"><div class="selectize-input items not-full"><input type="text" autocomplete="off" tabindex="" style="width: 4px;"></div><div class="selectize-dropdown single form-control" style="display: none;"><div class="selectize-dropdown-content"></div></div></div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label>Zone</label>
+        <input type="hidden" name="filter_zone_id__in[]"><select id="select-city-zones" class="form-control selectized" data-url="https://fluxmls.immoflux.ro/helper/zones" name="filter_zone_id__in[]" placeholder="Toate zonele" multiple="multiple" tabindex="-1" style="display: none;"></select><div class="selectize-control form-control multi plugin-remove_button"><div class="selectize-input items not-full"><input type="text" autocomplete="off" tabindex="" placeholder="Toate zonele" style="width: 86px;"></div><div class="selectize-dropdown multi form-control plugin-remove_button" style="display: none; width: 203px; top: 34px; left: 0px;"><div class="selectize-dropdown-content"></div></div></div>
+    </div>
+
+    
+        
+        
+    
+
+
+
+
+</div>
+
+<div class="row">
+
+
+
+    <div class="form-group col-sm-3">
+        <label>Cuvinte cheie</label>
+        <input type="text" class="form-control" id="filter_fields__search" name="filter_fields__search" autocomplete="off" value="">
+
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label>Pret</label>
+
+        <div class="row">
+            <div class="col-sm-6 input-min">
+                <input type="text" class="form-control" id="filter_price_min" name="filter_price__gte" autocomplete="off" placeholder="Min" value="">
+            </div>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" id="filter_price_max" name="filter_price__lte" autocomplete="off" placeholder="Max" value="">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <label>% Comision colaborare</label>
+
+        <div class="row">
+            <div class="col-sm-6 input-min">
+                <input type="text" class="form-control" id="filter_price_min" name="filter_commision_colaboration__gte" autocomplete="off" placeholder="Min" value="">
+            </div>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" id="filter_price_max" name="filter_commision_colaboration__lte" autocomplete="off" placeholder="Max" value="">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+                    </div>
+
+
+                    <input class="form-control" id="mode" type="hidden" name="mode" value="list">
+                    <input type="hidden" name="_token" value="J91hYV2gWIqy6eE59x6Sd057aR6VziVIGGzpX8JH">
+                    <input type="hidden" name="page" value="1">
+                    <input type="hidden" name="order" value="created_at">
+                    <input type="hidden" name="direction" value="desc">
+                    <input type="hidden" name="limit" value="15">
+                    <input type="hidden" name="only_mine" value="0">
+                    
+
+
+                </form>
+
+            </div>
+        </div>
+
+                    <div id="filter-result" data-filter="#filter" class="panel" data-loader-type="ellipsis">
+
+    <div class="panel-heading">
+        <div class="panel-actions panel-left-actions">
+                            <div class="btn-group">
+    
+            <a href="https://fluxmls.immoflux.ro/properties" type="button" class="btn btn-icon  btn-outline btn-default active"><i class="fa-list" aria-hidden="true"></i> Lista</a>
+            <a href="https://fluxmls.immoflux.ro/propertiesmap" type="button" class="btn btn-icon  btn-outline btn-default "><i class="fa-map-o" aria-hidden="true"></i> Harta</a>
+    </div>                    </div>
+        <div class="panel-actions hidden-xs">
+            
+            <div class="dropdown">
+                <button type="button" class="btn btn-pure dropdown-toggle" data-toggle="dropdown" data-hastooltip="true" aria-expanded="false" data-original-title="Paginare">
+                    <i class="icon ti-split-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right paging" role="menu">
+                    <li><a href="#" data-paging="3">3</a></li>
+                    <li><a href="#" data-paging="15" class="active">15</a></li>
+                    <li><a href="#" data-paging="50">50</a></li>
+                    <li><a href="#" data-paging="100">100</a></li>
+                </ul>
+            </div>
+            <a class="panel-action icon wb-expand" data-hastooltip="true" data-original-title="Ecran complet" data-toggle="panel-fullscreen" aria-hidden="true"></a>
+        </div>
+    </div>
+
+    <div class="panel-body"><div class="table-header-pagination"><ul class="pagination">
+        
+                    <li class="disabled"><span>«</span></li>
+        
+        
+                    
+            
+            
+                                                                        <li class="active"><span>1</span></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=2">2</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=3">3</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=4">4</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=5">5</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=6">6</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=7">7</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=8">8</a></li>
+                                                                    
+                            <li class="disabled"><span>...</span></li>
+            
+            
+                                
+            
+            
+                                                                        <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=578">578</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=579">579</a></li>
+                                                        
+        
+                    <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=2" rel="next">»</a></li>
+            </ul>
+<div class="pagination-info">Rezultate 1 - 15 din 8673</div></div>
+
+<form id="table-form">
+    <div class="tablesaw-bar mode-stack"></div><table class="tablesaw table table-hover table-striped tablesaw-stack" data-child="tr" data-tablesaw-mode="stack" data-selectable="selectable" id="table-7430">
+        <thead>
+        <tr>
+            <th class="width-50">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </th>
+
+            <th>
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </th>
+
+            <th>
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </th>
+            <th>
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </th>
+
+            <th>
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </th>
+            <th>
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </th>
+
+            <th>
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </th>
+
+            <th>
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </th>
+
+
+
+            <th>
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </th>
+
+            <th class="hidden-xs">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </th>
+
+            <th>
+                Actiuni
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+
+                    <tr id="item_71880" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71880/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71880">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/9262dd5db891c4c461c1e9bed4db8900/crop/100x100/mls/images/properties/616/71880/69a8a11e43c5d252180543.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Teren<br>
+                    <span class="text-muted">
+                    FX71880
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>34.500€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    704.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    IF Silistea Snagovului
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RE/MAX Prestige<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/3392/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Ioana Popa</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 22:46:54">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 23:16:21">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71880" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71879" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71879/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71879">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/91f27e7c8671c41088db593c6022d147/crop/100x100/mls/images/properties/945/71879/69a896bcb1312822283927.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Inchiriere<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71879
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>1.200€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    3
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    81.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    8/13
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    B Bucuresti, Mihai Bravu
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Story Music Management<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/4613/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Alin Prodan</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 21:50:05">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 22:32:02">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71879" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71876" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71876/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71876">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/6197ecf747e855a17b73ba104141ebf0/crop/100x100/mls/images/properties/397/71876/69a885c46c0d3703301904.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Casa / Vila<br>
+                    <span class="text-muted">
+                    FX71876
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>299.900€</strong></span><br>
+                   <strong> 2%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    5
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    161.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    BV Prejmer, Central
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Keller Wiliams Brasov<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/1442/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Alexandru Vacaru</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 20:16:35">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 21:51:52">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71876" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71873" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71873/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71873">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/cf7fd68c0208a29a3f13f38401b8a450/crop/100x100/mls/images/properties/900/71873/69a8790441ee7476920652.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Inchiriere<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71873
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>220€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    1
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    25.96 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    D/8
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    IF Chiajna
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Core Estate<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/4327/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Dragos Enachioaie</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 19:53:58">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 20:25:26">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71873" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71872" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71872/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71872">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/7da53d4a5b3de3d8970c6bf8f0f8df9d/crop/100x100/mls/images/properties/2/71872/69a86bdbc3046337598181.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Inchiriere<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71872
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>400€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    1
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    36.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    P/10
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    B Bucuresti, Bucur Obor
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RENET<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/4255/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Vlad Radu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 19:17:52">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 19:29:52">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71872" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71871" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71871/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71871">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/97754c0bef6003a4967ee05ebc8f617f/crop/100x100/mls/images/properties/620/71871/69a869beb6d1b670124340.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71871
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>193.500€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    3
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    68.80 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    10/10
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    B Bucuresti, Stefan cel Mare
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RE/MAX Quality<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/3192/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Vlad Baragan</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 17:59:18">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 19:21:40">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71871" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71866" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71866/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71866">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/f37fd66b479021da5d3aa2081c2b42b9/crop/100x100/mls/images/properties/4/71866/69a8503827c0f502931752.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71866
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>165.000€</strong></span><br>
+                   <strong> 1%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    2
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    54.20 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    7/10
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    CT Mamaia
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Tomis Top Estate<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/2719/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Florin Brașovanu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 16:58:11">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 17:31:51">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71866" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71840" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71840/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71840">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/5079f6332c3da79c4a5476a916b7dd2f/crop/100x100/mls/images/properties/212/71840/69a83b159142c258909029.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Casa / Vila<br>
+                    <span class="text-muted">
+                    FX71840
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>64.999€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    5
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    110.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    AG Costesti
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Mr. Exclusivitate Pitesti<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/456/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Ana Dobrescu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:53:05">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 16:01:56">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71840" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71841" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71841/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71841">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/3f62e8900cbe8d44b8b913b75fa20901/crop/100x100/mls/images/properties/212/71841/69a83b93b1537501180963.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Casa / Vila<br>
+                    <span class="text-muted">
+                    FX71841
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>86.700€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    2
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    80.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    AG Micesti
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Mr. Exclusivitate Pitesti<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/456/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Ana Dobrescu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:52:31">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 16:04:28">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71841" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71839" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71839/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71839">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/14d627e4b57343b475f23126cc824a8d/crop/100x100/mls/images/properties/602/71839/69a8395c233d1461310684.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Teren<br>
+                    <span class="text-muted">
+                    FX71839
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>19.900€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    2028.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    VN Dumbraveni
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RE/MAX Golden Home<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/3094/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Danut Bezea</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:22:14">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:56:42">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71839" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71867" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71867/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71867">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/a9fee0471dbc494ae83793c40197b930/crop/100x100/mls/images/properties/212/71867/69a850d1a5a0b820473162.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71867
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>62.500€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    2
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    39.80 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    3/4
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    AG Pitesti, Razboieni
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Mr. Exclusivitate Pitesti<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/2152/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Alexandru Tesu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:06:55">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 17:34:26">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71867" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71838" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71838/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71838">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/61e36d251057a845b9351b4c0de1b7dd/crop/100x100/mls/images/properties/595/71838/69a837822dc55913531326.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71838
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>129.900€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    4
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    126.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    4/8
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    AR Arad, Intim
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RE/MAX Dynamic<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/3649/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Alexandru Ciubotariu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 14:57:38">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:45:55">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71838" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71833" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71833/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71833">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/acb2ccf33b470d2532fb485739a08567/crop/100x100/mls/images/properties/414/71833/69a82efe3fc67461537285.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Teren<br>
+                    <span class="text-muted">
+                    FX71833
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>19.900€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    598.00 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    IF Peris
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            RE/MAX Properties<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/1629/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Petru Ilies</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 14:19:06">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 15:12:57">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71833" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71813" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71813/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71813">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/47bbbe13136e144f0a1bdacbf167584b/crop/100x100/mls/images/properties/238/71813/69a806edb00ff685155191.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71813
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>89.000€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    2
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    49.02 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    10/10
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    B Bucuresti, Mihai Bravu
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            Alpha Team Properties<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/531/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Savin  Gheboianu</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 11:30:55">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 12:23:51">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71813" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+                    <tr id="item_71808" class="model-item" data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/properties/71808/slidepanel">
+                <td><b class="tablesaw-cell-label">
+                          <span class="checkbox-custom checkbox-primary hidden-xs">
+                            <input class="agents-checkbox selectable-all" type="checkbox" id="select_all">
+                            <label></label>
+                          </span>
+            </b><span class="tablesaw-cell-content">
+              <span class="checkbox-custom checkbox-primary">
+                <input class="agents-checkbox selectable-item" type="checkbox" name="id[]" value="71808">
+                <label></label>
+              </span>
+                </span></td>
+
+                <td class="cell-80"><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="propertyimage_id">Imagine</span><br>
+                <span class="sortablefield" data-field="status|status_pipeline"> Stare</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <a class="avatar avatar-big" href="#">
+                        
+                                                    <img src="https://apcdn.immoflux.ro/a/b7c740b7afd4d708e7a8ba0f1e7da6a7/crop/100x100/mls/images/properties/435/71808/69a800c311d2d803775051.jpg">
+                        
+                    </a>
+
+                    <span class="label bg-green-600">Activa</span>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="transaction_id">Tranzactie</span><br>
+                <span class="sortablefield" data-field="category_id">Tip</span>
+            </b><span class="tablesaw-cell-content">
+                    Vanzare<br>
+                    Apartament<br>
+                    <span class="text-muted">
+                    FX71808
+                    </span>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="price">Pret</span><br>
+                <span class="sortablefield" data-field="commision_colaboration">% Colaborare</span>
+            </b><span class="tablesaw-cell-content">
+                     <span class="blue-600"><strong>270.000€</strong></span><br>
+                   <strong> 0%</strong>
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="rooms">Camere</span>
+
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    3
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="surface_size">Suprafata</span>
+            </b><span class="tablesaw-cell-content">
+                    <strong>
+                    90.56 m<sup>2</sup>
+                    </strong>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="floor">Etaj</span>
+            </b><span class="tablesaw-cell-content">
+                    2/4
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                <span class="sortablefield" data-field="zone_id">Zona</span><br>
+                <span class="sortablefield" data-field="address">Strada</span>
+            </b><span class="tablesaw-cell-content">
+
+                    B Bucuresti, Sisesti
+                    <div class="hide-on-private">
+                                            </div>
+                </span></td>
+
+
+                <td><b class="tablesaw-cell-label">
+                <span>Agentie</span><br>
+                <span>Agent</span>
+
+            </b><span class="tablesaw-cell-content">
+
+                                            META HOMES<br>
+                    
+                                                <span data-toggle="slidePanel" data-url="https://fluxmls.immoflux.ro/agents/1805/public/slidepanel" class="labelish purple-600"><i class="ti-user"></i>Andreea Posteucă</span> 
+                    
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                
+                <span class="sortablefield active" data-field="created_at">Adaugat <i class="icon text-success ti-angle-down"></i> </span><br>
+                <span class="sortablefield" data-field="updated_at">Modificat</span><br>
+                            </b><span class="tablesaw-cell-content">
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 11:23:49">04.03.2026</span><br>
+                    <span class="text-muted" data-tooltip="true" title="04.03.2026 11:54:25">04.03.2026</span><br>
+
+                </span></td>
+
+                <td><b class="tablesaw-cell-label">
+                Actiuni
+            </b><span class="tablesaw-cell-content">
+                    
+                    <a href="#" data-href="#" type="button" class="btn btn-icon btn-info btn-round btn-outline ladda-button  btn-sm btn-round" data-type="pinit" data-id="71808" data-model="property" data-mode="1" data-style="zoom-out" data-tooltip="true" data-placement="top" data-original-title="Adauga la Pin-uri"><i class="ti-pin-alt" aria-hidden="true"></i></a>
+
+
+
+
+
+                </span></td>
+
+            </tr>
+        
+    </tbody></table>
+</form>
+<div class="table-footer">
+                    <div class="pull-right"><ul class="pagination">
+        
+                    <li class="disabled"><span>«</span></li>
+        
+        
+                    
+            
+            
+                                                                        <li class="active"><span>1</span></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=2">2</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=3">3</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=4">4</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=5">5</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=6">6</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=7">7</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=8">8</a></li>
+                                                                    
+                            <li class="disabled"><span>...</span></li>
+            
+            
+                                
+            
+            
+                                                                        <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=578">578</a></li>
+                                                                                <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=579">579</a></li>
+                                                        
+        
+                    <li><a href="https://fluxmls.immoflux.ro/properties/filter?page=2" rel="next">»</a></li>
+            </ul>
+</div>
+
+                    <div class="hidden filtercount">8673</div>
+                </div>
+</div>
+    <div class="panel-selected hidden"></div>
+
+</div>            </div>
+
+
+
+</div>
+<!-- End Page -->
+
+<!-- Modal -->
+<div class="modal fade" id="addContactFormModal" aria-hidden="false" aria-labelledby="exampleFormModalLabel" role="dialog" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="addcontactform" class="modal-content" action="https://fluxmls.immoflux.ro/contacts/createshort">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+                <h4 class="modal-title" id="exampleFormModalLabel">Adauga contact</h4>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row">
+        </div>
+
+<div class="row">
+    <div class="col-sm-6">
+        <label for="first_name">Prenume</label><input class="form-control" id="first_name" type="text" name="first_name">
+    </div>
+
+    <div class="col-sm-6">
+        <label for="last_name">Nume</label><input class="form-control" id="last_name" type="text" name="last_name">
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="form-group">
+            
+            
+            <label for="emails">E-mail</label>
+            <div class="input-group repeater ">
+                                    <input class="form-control" id="last_name" type="text" name="emails[]" value="">
+                                <span class="input-group-addon padding-0">
+                                    <a type="button" class="btn btn-success btn-repeater" data-repeater=""><i class="icon ti-plus" aria-hidden="true"></i></a>
+                                    <a type="button" class="btn btn-danger btn-repeater-delete" data-repeater=""><i class="icon ti-close" aria-hidden="true"></i></a>
+                                </span>
+                    </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="form-group">
+            
+            
+
+            <label for="emails">Telefon</label>
+            <div class="input-group repeater ">
+                                    <input class="form-control" id="last_name" type="text" name="phones[]" value="">
+                                <span class="input-group-addon padding-0">
+                                    <a type="button" class="btn btn-success btn-repeater" data-repeater=""><i class="icon ti-plus" aria-hidden="true"></i></a>
+                                    <a type="button" class="btn btn-danger btn-repeater-delete" data-repeater=""><i class="icon ti-close" aria-hidden="true"></i></a>
+                                </span>
+                    </div>
+        </div>
+    </div>
+</div>
+
+
+            </div>
+
+            <div class="modal-footer">
+
+                    <button id="savemodal" data-targetmodal="#addContactFormModal" data-targetform="#addcontactform" type="button" class="btn btn-floating btn-success ladda-button" data-style="zoom-out" data-toggle="tooltip" data-original-title="Salveaza"><i class="icon ti-check" aria-hidden="true"></i></button>
+                    <button id="cancelmodal" data-target="#addContactFormModal" data-dismiss="modal" type="button" class="btn btn-floating btn-default" data-toggle="tooltip" data-original-title="Anuleaza"><i class="icon ti-close" aria-hidden="true"></i></button>
+
+            </div>
+
+        </form>
+    </div>
+</div>
+<!-- End Modal -->
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+
+    ga('create', 'UA-89198133-1', 'auto');
+
+            ga('set', 'userId', '2512nanu');
+    
+      ga('send', 'pageview');
+
+
+</script>
+<script src="https://js.pusher.com/4.1/pusher.min.js"></script>
+<script src="https://fluxmls.immoflux.ro/js/all.js?v=1.43"></script><div class="frameCacheDiv"></div>
+<script src="https://fluxmls.immoflux.ro/vendor/tinymce/tinymce.min.js"></script>
+<link rel="stylesheet" href="https://fluxmls.immoflux.ro/vendor/blueimp/css/blueimp-gallery.css">
+<script src="https://fluxmls.immoflux.ro/vendor/blueimp/js/jquery.blueimp-gallery.min.js" charset="utf-8"></script>
+
+
+    <script>
+        $(document).ready(function() {
+//        $(document).on('change','[type="checkbox"]',function(e){
+//            $(this).addClass('dirty');
+//        });
+
+            var cat = '0';
+            var reset = 0;
+
+            $('#pfilter-cleaner').on('click', function(e){
+                e.preventDefault();
+                reset = 1;
+                getCatFilter(cat);
+                reset = 0;
+            });
+
+            $(document).on('click', '[data-cat]', function(event){
+                var url = $(this).parent().parent().data('url');
+                cat = $(this).data('cat');
+                getCatFilter(cat);
+            });
+
+            function getCatFilter(cat){
+                var add = '&reset='+reset;
+                var url = $('#filter').data('filterview');
+                $('#filter-switcher').html('<div class="height-10 text-center"><div class="loader loader-default"></div></div>');
+                $.get(url+'?cat='+cat+add)
+                        .done(function(data){
+                            $('#filter-switcher').html(data);
+                            initFilterOnChange();
+                            initSelectize();
+                            initSelectPicker();
+                            initSelectizeAjax();
+                            initSelectizeCity();
+                            initSelectizeZones();
+                            initDatePicker();
+                            initTypehead();
+                            filterRefresh();
+                        })
+            }
+
+
+            $(document).on('click', '[data-type=savebridgeform]', function (event) {
+                event.preventDefault();
+                window.removeTooltips();
+                var url = $(this).data('href');
+                var l = Ladda.create(this);
+                l.start();
+
+                var self = this;
+                $.post(url, $('#table-form').serialize())
+                        .done(function(data){
+                            $('#filter').trigger('filter:pagechange');
+                            $('#filter').trigger('filter:refresh');
+                            if (data.status == 0) {
+                                window.inMessageError(data.errors);
+                            }
+                        })
+                        .fail(function(){
+                            window.inMessageError('Error');
+                        })
+                        .always(function(){
+                            l.stop();
+                        });
+
+            })
+        });
+    </script>
+
+<script>
+    (function(document, window, $) {
+        'use strict';
+
+        var Site = window.Site;
+        $(document).ready(function() {
+            Site.run();
+        });
+
+    })(document, window, jQuery);
+
+
+</script>
+
+
+
+
+<div id="blueimp-gallery" class="blueimp-gallery" data-start-slideshow="true">
+    <div class="slides"></div>
+    <h3 class="title"></h3>
+    <a class="prev">‹</a>
+    <a class="next">›</a>
+    <a class="close">×</a>
+    <ol class="indicator"></ol>
+</div>
+
+
+<div class="fullscreener hidden" id="fullscreener">
+
+    <div class="site-action">
+        <button type="button" class="btn  btn-floating btn-default fullscreenclose" aria-hidden="true">
+            <i class="icon ti-close" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="fullscreener-nav">
+            <button type="button" data-iresize="1200" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-desktop" aria-hidden="true"></button>
+            <button type="button" data-iresize="600" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-tablet" aria-hidden="true"></button>
+            <button type="button" data-iresize="320" class="btn btn-iresize btn-icon btn-pure btn-lg actions-top icon ti-mobile" aria-hidden="true"></button>
+            <div class="lang-switch-nav"> <a href="#" class="language-switch active" data-langswitch="ro"> <span class="flag-icon flag-icon-ro"></span></a> <a href="#" class="language-switch" data-langswitch="en"> <span class="flag-icon flag-icon-gb"></span></a></div>
+        </div>
+
+
+    </div>
+
+    <div id="iframediv"></div>
+</div><div id="elfinderpath" data-url="https://fluxmls.immoflux.ro/elfinder/tinymce4"></div>
+
+
+
+
+</body></html>
