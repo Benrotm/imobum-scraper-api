@@ -935,7 +935,34 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                         // Wait another 1.5 seconds for DOM tr rendering to complete
                                                         await page.waitForTimeout(1500);
 
-                                                        targetUrl = null; // Skip upcoming page.goto since we are natively filtered
+                                                        // DYNAMIC PAGINATION MUTATION
+                                                        // FluxMLS blocks direct GET queries to ?page=x and throws Laravel errors.
+                                                        // We must maliciously hijack an existing pagination click handler if we want a page > 1 natively via AJAX
+                                                        if (pageNum > 1) {
+                                                                await logLive(`Executing DOM Mutation hack to skip to FluxMLS Page ${pageNum}...`, 'info');
+                                                                const pageSkipPromise = page.waitForResponse(response =>
+                                                                        response.url().includes('properties/filter') && response.status() === 200,
+                                                                        { timeout: 15000 }
+                                                                ).catch(() => null);
+
+                                                                await page.evaluate((targetPage) => {
+                                                                        const link = document.querySelector('.pagination li a');
+                                                                        if (link) {
+                                                                                link.setAttribute('href', `https://fluxmls.immoflux.ro/properties/filter?page=${targetPage}`);
+                                                                                link.click();
+                                                                        }
+                                                                }, pageNum);
+
+                                                                const skipRes = await pageSkipPromise;
+                                                                if (skipRes) {
+                                                                        await logLive(`Successfully loaded FluxMLS Page ${pageNum} natively!`, 'success');
+                                                                } else {
+                                                                        await logLive(`WARNING: FluxMLS native jump to page ${pageNum} may have failed.`, 'warn');
+                                                                }
+                                                                await page.waitForTimeout(2000); // Wait for newly fetched TR elements to render
+                                                        }
+
+                                                        targetUrl = null; // Skip upcoming page.goto since we are natively filtered (and now paginated)
                                                 } catch (guiError) {
                                                         throw new Error(`GUI Interaction failed: ${guiError.message}`);
                                                 }
