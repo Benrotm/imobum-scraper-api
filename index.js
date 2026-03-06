@@ -283,6 +283,11 @@ app.post('/api/run-bulk-scrape', async (req, res) => {
                         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 });
 
+                // Mask automation
+                await context.addInitScript(() => {
+                        Object.defineProperty(navigator, 'webdriver', { get: () => false });
+                });
+
                 // BANDWIDTH OPTIMIZATION: Block heavy media
                 await context.route('**/*', (route) => {
                         const request = route.request();
@@ -835,7 +840,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 browser = await chromium.launch(launchOptions);
 
                 const context = await browser.newContext({
-                        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+                });
+
+                // Mask automation
+                await context.addInitScript(() => {
+                        Object.defineProperty(navigator, 'webdriver', { get: () => false });
                 });
 
                 // BANDWIDTH OPTIMIZATION REMOVED: Immoflux relies heavily on assets for React hydration.
@@ -987,6 +997,11 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         // Use networkidle for Immoflux to ensure React has fully rendered listings
                         const waitCondition = (isFlux || isImmo) ? 'networkidle' : 'domcontentloaded';
                         await page.goto(targetUrl, { waitUntil: waitCondition, timeout: 60000 });
+
+                        if (isImmo) {
+                                await logLive('Entering extended wait for React hydration...', 'info');
+                                await page.waitForTimeout(5000); // EXTRA WAIT for the loader white box to clear
+                        }
                 } else {
                         await logLive(`Extraction proceeding naturally from physical POST navigation.`, 'info');
                 }
