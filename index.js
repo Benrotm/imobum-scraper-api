@@ -1043,9 +1043,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                                 await logLive(`WARNING: No mapping found for city '${cityFilter}'. Retaining base URL state.`, 'warn');
                                                         }
                                                 } else {
-                                                        // Explicitly clear the city filter parameter to ensure it doesn't persist from session
-                                                        apUrl.searchParams.set('filter_city_id__eq', '');
-                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter}.`, 'info');
+                                                        // Completely remove the city filter parameter to force region-wide search
+                                                        apUrl.searchParams.delete('filter_city_id__eq');
+                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter} (Timis).`, 'info');
                                                 }
 
                                                 apUrl.searchParams.set('mode', 'list');
