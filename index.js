@@ -785,9 +785,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 return res.status(400).json({ error: 'Missing required dynamic parameters (categoryUrl, linkSelector, extractSelectors)' });
         }
 
-        console.log('[DEBUG] Incoming run-dynamic-scrape payload keys:', Object.keys(req.body));
-        console.log('[DEBUG] cityFilter value:', req.body.cityFilter);
-
         const currentSupabase = (reqSupabaseUrl && reqSupabaseKey) ? createClient(reqSupabaseUrl, reqSupabaseKey) : supabase;
 
         async function logLive(msg, level = 'info') {
@@ -1030,30 +1027,30 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 }
                                         } else if (isImmo) {
                                                 // Anunturi Particulari operates exclusively via HTTP GET parameters
-                                                const apUrl = new URL(targetUrl);
-                                                apUrl.searchParams.set('filter_county_id__eq', countyId.toString());
+                                                // SCRAPER ENFORCEMENT: Build a fresh URL to avoid session-saved parameters from the base URL
+                                                const cleanUrl = new URL(apUrl.origin + apUrl.pathname);
+
+                                                // Sync essential parameters
+                                                if (pageNum) cleanUrl.searchParams.set('page', pageNum.toString());
+                                                cleanUrl.searchParams.set('filter_county_id__eq', countyId.toString());
 
                                                 if (cityFilter) {
                                                         const normalizedCity = cityFilter.toLowerCase().trim();
                                                         const cityId = cityMap[normalizedCity];
                                                         if (cityId) {
-                                                                apUrl.searchParams.set('filter_city_id__eq', cityId.toString());
+                                                                cleanUrl.searchParams.set('filter_city_id__eq', cityId.toString());
                                                                 await logLive(`Mapped City Filter '${cityFilter}' to ID ${cityId}`, 'success');
                                                         } else {
-                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Retaining base URL state.`, 'warn');
+                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Scaling back to region-wide.`, 'warn');
                                                         }
                                                 } else {
-                                                        // Completely remove the city filter parameter to force region-wide search
-                                                        apUrl.searchParams.delete('filter_city_id__eq');
-                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter} (Timis).`, 'info');
+                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter} (ID: ${countyId}).`, 'info');
                                                 }
 
-                                                apUrl.searchParams.set('mode', 'list');
-                                                // Removed firstload=1 as it often resets the AJAX session to page 1
-                                                apUrl.searchParams.delete('firstload');
+                                                cleanUrl.searchParams.set('mode', 'list');
 
-                                                targetUrl = apUrl.toString();
-                                                await logLive(`Generated direct HTTP GET filter URL for AP: ${targetUrl}`, 'success');
+                                                targetUrl = cleanUrl.toString();
+                                                await logLive(`Final Immoflux Target URL: ${targetUrl}`, 'success');
                                         }
                                 } else {
                                         await logLive(`Could not find an internal ID matching '${regionFilter}'. Navigating cleanly natively.`, 'warn');
