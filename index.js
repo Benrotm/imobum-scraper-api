@@ -1004,7 +1004,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         await page.waitForSelector(waitSelector, { timeout: 15000 });
                         await page.waitForTimeout(1500); // Give JS framework time to settle
                 } catch (e) {
+                        const currentUrl = page.url();
+                        const pageTitle = await page.title().catch(() => 'Unknown');
+                        const contentSnippet = await page.evaluate(() => document.body.innerText.substring(0, 500)).catch(() => 'N/A');
                         await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
+                        await logLive(`Diagnostic - URL: ${currentUrl} | Title: ${pageTitle}`, 'info');
+                        await logLive(`Diagnostic - Content Preview: ${contentSnippet.replace(/\n/g, ' ')}`, 'info');
                 }
 
                 // For FluxMLS, extract agent info + slidepanel URLs from the listing table
