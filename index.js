@@ -968,6 +968,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 }
                                         } else if (isImmo) {
                                                 // Anunturi Particulari operates exclusively via HTTP GET parameters
+                                                // We use double underscore __eq for maximum compatibility with the platform's filtering engine
                                                 targetUrl = `${targetUrl}&filter_county_id__eq=${countyId}&mode=list&firstload=1`;
                                                 await logLive(`Generated direct HTTP GET filter URL for AP: ${targetUrl}`, 'success');
                                         }
@@ -981,7 +982,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                 if (targetUrl) {
                         await logLive(`Navigating to Dynamic Partner Index: ${targetUrl}`, 'info');
-                        await page.goto(targetUrl, { waitUntil: isFlux ? 'networkidle' : 'domcontentloaded', timeout: 45000 });
+                        // Use networkidle for Immoflux to ensure React has fully rendered listings
+                        const waitCondition = (isFlux || isImmo) ? 'networkidle' : 'domcontentloaded';
+                        await page.goto(targetUrl, { waitUntil: waitCondition, timeout: 60000 });
                 } else {
                         await logLive(`Extraction proceeding naturally from physical POST navigation.`, 'info');
                 }
