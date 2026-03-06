@@ -1040,8 +1040,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                                 apUrl.searchParams.set('filter_city_id__eq', cityId.toString());
                                                                 await logLive(`Mapped City Filter '${cityFilter}' to ID ${cityId}`, 'success');
                                                         } else {
-                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Using original URL.`, 'warn');
+                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Retaining base URL state.`, 'warn');
                                                         }
+                                                } else {
+                                                        // Explicitly clear the city filter parameter to ensure it doesn't persist from session
+                                                        apUrl.searchParams.set('filter_city_id__eq', '');
+                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter}.`, 'info');
                                                 }
 
                                                 apUrl.searchParams.set('mode', 'list');
