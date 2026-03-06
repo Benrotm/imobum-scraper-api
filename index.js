@@ -848,7 +848,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 const isImmo = targetUrl.includes('immoflux.ro') && !isFlux;
 
                 if ((isFlux || isImmo) && immofluxUser && immofluxPass) {
-                        const loginUrl = isFlux ? 'https://fluxmls.immoflux.ro/login' : 'https://immoflux.ro/login';
+                        const loginUrl = targetUrl.includes('blitz.immoflux.ro')
+                                ? 'https://blitz.immoflux.ro/login'
+                                : 'https://immoflux.ro/login';
                         await logLive(`Performing upfront authentication for ${loginUrl}...`, 'info');
 
                         await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -1001,15 +1003,24 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 }
 
                 try {
-                        await page.waitForSelector(waitSelector, { timeout: 15000 });
-                        await page.waitForTimeout(1500); // Give JS framework time to settle
+                        await page.waitForSelector(waitSelector, { timeout: 30000 });
+                        await page.waitForTimeout(2000); // Give JS framework time to settle after selector appears
                 } catch (e) {
                         const currentUrl = page.url();
                         const pageTitle = await page.title().catch(() => 'Unknown');
-                        const contentSnippet = await page.evaluate(() => document.body.innerText.substring(0, 500)).catch(() => 'N/A');
+                        const htmlContent = await page.content().catch(() => 'N/A');
+                        const bodyText = await page.evaluate(() => document.body.innerText.substring(0, 1000)).catch(() => 'N/A');
+
                         await logLive(`WARNING: Link selector ${waitSelector} not found on page.`, 'warn');
                         await logLive(`Diagnostic - URL: ${currentUrl} | Title: ${pageTitle}`, 'info');
-                        await logLive(`Diagnostic - Content Preview: ${contentSnippet.replace(/\n/g, ' ')}`, 'info');
+                        await logLive(`Diagnostic - Body Snippet: ${bodyText.substring(0, 300).replace(/\n/g, ' ')}`, 'info');
+
+                        if (htmlContent.includes('challenge') || htmlContent.includes('captcha')) {
+                                await logLive("BOT PROTECTION DETECTED: Cloudflare or similar challenge found.", "error");
+                        }
+                        if (htmlContent.includes('login') || htmlContent.includes('Sign in')) {
+                                await logLive("AUTH FAILURE: Redirected to login page or session expired.", "error");
+                        }
                 }
 
                 // For FluxMLS, extract agent info + slidepanel URLs from the listing table
