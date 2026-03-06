@@ -778,12 +778,15 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
                 supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
                 immofluxUser, immofluxPass,
-                adminId, regionFilter
+                adminId, regionFilter, cityFilter
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
                 return res.status(400).json({ error: 'Missing required dynamic parameters (categoryUrl, linkSelector, extractSelectors)' });
         }
+
+        console.log('[DEBUG] Incoming run-dynamic-scrape payload keys:', Object.keys(req.body));
+        console.log('[DEBUG] cityFilter value:', req.body.cityFilter);
 
         const currentSupabase = (reqSupabaseUrl && reqSupabaseKey) ? createClient(reqSupabaseUrl, reqSupabaseKey) : supabase;
 
@@ -820,7 +823,11 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
         let browser = null;
         try {
                 // Construct target URL with pageNum
-                let targetUrl = categoryUrl.includes('?') ? `${categoryUrl}&page=${pageNum}` : `${categoryUrl}?page=${pageNum}`;
+                // We'll use URLSearchParams for robust construction
+                const parsedUrl = new URL(categoryUrl);
+                if (pageNum) parsedUrl.searchParams.set('page', pageNum.toString());
+
+                let targetUrl = parsedUrl.toString();
                 await logLive(`Booting Chrome cluster... Target: ${targetUrl}`, 'info');
 
                 if (await isJobStopped()) {
@@ -897,6 +904,49 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         'ialomita': 24, 'iasi': 25, 'ilfov': 26, 'maramures': 27, 'mehedinti': 28, 'mures': 29,
                                         'neamt': 30, 'olt': 31, 'prahova': 32, 'salaj': 33, 'satu mare': 34, 'sibiu': 35,
                                         'suceava': 36, 'teleorman': 37, 'timis': 38, 'tulcea': 39, 'valcea': 40, 'vaslui': 41, 'vrancea': 42
+                                };
+
+                                const cityMap = {
+                                        'timisoara': 12224,
+                                        'bucuresti': 1,
+                                        'cluj-napoca': 573,
+                                        'iasi': 3894,
+                                        'constanta': 1056,
+                                        'brasov': 823,
+                                        'craiova': 1485,
+                                        'galati': 1587,
+                                        'oradea': 523,
+                                        'ploiesti': 4554,
+                                        'arad': 343,
+                                        'pitesti': 470,
+                                        'sibiu': 4894,
+                                        'bacau': 612,
+                                        'targu mures': 3294,
+                                        'baia mare': 3123,
+                                        'buzau': 984,
+                                        'botosani': 784,
+                                        'satu mare': 4234,
+                                        'ramnicu valcea': 5634,
+                                        'drobeta-turnu severin': 3054,
+                                        'suceava': 4434,
+                                        'piatra neamt': 3354,
+                                        'targu jiu': 2043,
+                                        'targoviste': 1743,
+                                        'focsani': 4943,
+                                        'bistrita': 643,
+                                        'tulcea': 4543,
+                                        'resita': 1343,
+                                        'slatina': 3143,
+                                        'calarasi': 1243,
+                                        'giurgiu': 1943,
+                                        'alba iulia': 143,
+                                        'deva': 2243,
+                                        'hunedoara': 2244,
+                                        'zalau': 4143,
+                                        'sfantu gheorghe': 1643,
+                                        'vaslui': 4743,
+                                        'slobozia': 2443,
+                                        'alexandria': 4343
                                 };
 
                                 const normalizedRegion = regionFilter.toLowerCase().normalize('NFC');
@@ -980,8 +1030,25 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 }
                                         } else if (isImmo) {
                                                 // Anunturi Particulari operates exclusively via HTTP GET parameters
-                                                // We use double underscore __eq for maximum compatibility with the platform's filtering engine
-                                                targetUrl = `${targetUrl}&filter_county_id__eq=${countyId}&mode=list&firstload=1`;
+                                                const apUrl = new URL(targetUrl);
+                                                apUrl.searchParams.set('filter_county_id__eq', countyId.toString());
+
+                                                if (cityFilter) {
+                                                        const normalizedCity = cityFilter.toLowerCase().trim();
+                                                        const cityId = cityMap[normalizedCity];
+                                                        if (cityId) {
+                                                                apUrl.searchParams.set('filter_city_id__eq', cityId.toString());
+                                                                await logLive(`Mapped City Filter '${cityFilter}' to ID ${cityId}`, 'success');
+                                                        } else {
+                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Using original URL.`, 'warn');
+                                                        }
+                                                }
+
+                                                apUrl.searchParams.set('mode', 'list');
+                                                // Removed firstload=1 as it often resets the AJAX session to page 1
+                                                apUrl.searchParams.delete('firstload');
+
+                                                targetUrl = apUrl.toString();
                                                 await logLive(`Generated direct HTTP GET filter URL for AP: ${targetUrl}`, 'success');
                                         }
                                 } else {
