@@ -1028,7 +1028,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         } else if (isImmo) {
                                                 // Anunturi Particulari operates exclusively via HTTP GET parameters
                                                 // SCRAPER ENFORCEMENT: Build a fresh URL to avoid session-saved parameters from the base URL
-                                                const cleanUrl = new URL(apUrl.origin + apUrl.pathname);
+                                                const cleanUrl = new URL(parsedUrl.origin + parsedUrl.pathname);
 
                                                 // Sync essential parameters
                                                 if (pageNum) cleanUrl.searchParams.set('page', pageNum.toString());
