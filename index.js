@@ -862,12 +862,14 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 const isImmo = targetUrl.includes('immoflux.ro') && !isFlux;
 
                 if ((isFlux || isImmo) && immofluxUser && immofluxPass) {
-                        const loginUrl = targetUrl.includes('blitz.immoflux.ro')
-                                ? 'https://blitz.immoflux.ro/login'
-                                : 'https://immoflux.ro/login';
+                        const loginUrl = targetUrl.includes('fluxmls.immoflux.ro')
+                                ? 'https://fluxmls.immoflux.ro/login'
+                                : targetUrl.includes('blitz.immoflux.ro')
+                                        ? 'https://blitz.immoflux.ro/login'
+                                        : 'https://immoflux.ro/login';
                         await logLive(`Performing upfront authentication for ${loginUrl}...`, 'info');
 
-                        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                        await page.goto(loginUrl, { waitUntil: 'load', timeout: 45000 });
 
                         // IF we are already logged in, it will redirect out of /login. 
                         // We only type credentials if we are still on the login page.
@@ -878,7 +880,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                         await page.type('#inputEmail', immofluxUser);
                                         await page.type('#inputPassword', immofluxPass);
                                         await Promise.all([
-                                                page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }),
+                                                page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => null),
                                                 page.click('button[type="submit"]')
                                         ]);
                                         await logLive('Authentication successful.', 'success');
@@ -956,8 +958,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                                 try {
                                                         await logLive('Opening FluxMLS filter panel...', 'info');
-                                                        const filterBtn = 'a.btn-icon.btn-primary.btn-outline[href="#filter-wrapper"]';
-                                                        await page.waitForSelector(filterBtn, { timeout: 10000 });
+                                                        const filterBtn = 'a[href="#filter-wrapper"], a[data-type="filterbutton"]';
+                                                        await page.waitForSelector(filterBtn, { timeout: 15000, state: 'visible' });
                                                         await page.click(filterBtn);
 
                                                         await logLive('Activating Judet dropdown...', 'info');
