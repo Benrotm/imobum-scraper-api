@@ -112,56 +112,106 @@ async function runSoldImmofluxScrape(req, res) {
 
         // Apply Filters via UI
         await logLive('Opening filter wrapper...');
-        const filterBtn = 'a[href="#filter-wrapper"]';
+        const filterBtn = 'a[href="#filter-wrapper"], a.btn-icon.btn-primary.btn-outline[href="#filter-wrapper"]';
         try {
-            if (await page.locator(filterBtn).isVisible()) {
-                 await page.click(filterBtn);
-                 await page.waitForTimeout(1000);
-            }
-        } catch(e) {}
+            await page.waitForSelector(filterBtn, { timeout: 10000 });
+            await page.click(filterBtn);
+            await page.waitForTimeout(1000);
+        } catch(e) {
+            await logLive('Filter wrapper already open or not found.', 'info');
+        }
 
-        const applySelectizeFilter = async (labelName, valuesToType) => {
-            if (!valuesToType || valuesToType.length === 0) return;
+        const applySelectizeFilter = async (selectorOrLabel, values, isId = false) => {
+            if (!values || values.length === 0) return;
             
-            await logLive(`Applying filter for [${labelName}]: ${valuesToType.join(', ')}`);
-            for (const val of valuesToType) {
+            for (const val of values) {
                 if (!val) continue;
-                // Find label with exact text, then find the selectize input after it
-                const selectizeInputPath = `//label[contains(text(), "${labelName}")]/following-sibling::div//div[contains(@class, "selectize-input")]/input`;
+                await logLive(`Attempting to set filter [${selectorOrLabel}]: ${val}`);
                 
                 try {
-                    await page.click(selectizeInputPath);
+                    let controlSelector;
+                    if (isId) {
+                        controlSelector = `${selectorOrLabel} + .selectize-control .selectize-input`;
+                    } else {
+                        // Fallback to label search
+                        controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
+                    }
+
+                    const inputLoc = isId ? page.locator(controlSelector) : page.locator(`xpath=${controlSelector}`);
+                    
+                    if (await inputLoc.count() === 0 && !isId) {
+                        // Try another label variant if first fails
+                        await logLive(`Label [${selectorOrLabel}] not found, trying with comma variant...`);
+                        const altPath = `//label[contains(text(), "${selectorOrLabel.replace('t', 'ț')}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
+                        const altLoc = page.locator(`xpath=${altPath}`);
+                        if (await altLoc.count() > 0) {
+                            await altLoc.click();
+                        } else {
+                            throw new Error(`Control for ${selectorOrLabel} not found`);
+                        }
+                    } else {
+                        await inputLoc.click();
+                    }
+
                     await page.waitForTimeout(500);
                     
-                    await page.keyboard.type(val, { delay: 50 });
-                    await page.waitForTimeout(1000); // Wait for dropdown to populate
+                    // Clear existing if any (Backspaces)
+                    for(let i=0; i<20; i++) await page.keyboard.press('Backspace');
                     
-                    // The site reloads via AJAX heavily. We intercept the network requests if needed, but Enter usually handles it.
+                    await page.keyboard.type(val, { delay: 100 });
+                    await page.waitForTimeout(1500); // Wait for dropdown results
+                    
+                    // Listen for filter response
+                    const filterResponsePromise = page.waitForResponse(r => 
+                        r.url().includes('properties/filter') && r.status() === 200,
+                        { timeout: 10000 }
+                    ).catch(() => null);
+
                     await page.keyboard.press('Enter');
-                    await page.waitForTimeout(2000); // Wait for the AJAX filter response
+                    await filterResponsePromise;
+                    await page.waitForTimeout(3000); // Wait for list to update
+                    await logLive(`Filter applied successfully: ${val}`);
+
                 } catch(e) {
-                    await logLive(`Could not set filter ${val} for ${labelName}: ${e.message}`, 'warn');
+                    await logLive(`Could not set filter ${val}: ${e.message}`, 'warn');
+                    // Take screenshot on failure for debugging
+                    try {
+                        const shotPath = `filter_error_${selectorOrLabel}_${Date.now()}.png`;
+                        await page.screenshot({ path: shotPath });
+                        await logLive(`Screenshot saved as ${shotPath}`, 'info');
+                    } catch(ss) {}
                 }
             }
         };
 
+        // Stadiu filter - The site allows only ONE stadiu at a time.
+        // If user provided multiple, we'll only use the FIRST one for this page run,
+        // or loop if it's the same page.
         if (config.stadiu_filter && config.stadiu_filter.length > 0) {
-            await applySelectizeFilter('Stadiu', config.stadiu_filter);
-        }
-        if (config.region_filter) {
-            await applySelectizeFilter('Judet', [config.region_filter]);
-        }
-        if (config.city_filter) {
-            await applySelectizeFilter('Localitate', [config.city_filter]);
-        }
-        if (config.zone_filter) {
-            await applySelectizeFilter('Zona', [config.zone_filter]);
+            // We'll just apply the first one for now as per user feedback that it doesn't support 2.
+            await applySelectizeFilter('select#status', [config.stadiu_filter[0]], true);
         }
 
-        await logLive(`Filters applied. Extracting listings on Page ${pageNum}...`);
+        // Region / Oras / Zona
+        if (config.region_filter) {
+            // Check if it's "select#filter-county-id-eq" or labeled "Judet"
+            await applySelectizeFilter('select#filter-county-id-eq', [config.region_filter], true);
+        }
+        if (config.city_filter) {
+            await applySelectizeFilter('select#filter-city-id-eq', [config.city_filter], true);
+        }
+        if (config.zone_filter) {
+            await applySelectizeFilter('select#select-city-zones', [config.zone_filter], true);
+        }
+
+        await logLive(`Filters processed. Extracting listings on Page ${pageNum}...`);
         
-        // Give time for list to rerender
-        await page.waitForTimeout(3000);
+        // Wait for results to appear
+        try {
+            await page.waitForSelector('tr.model-item', { timeout: 10000 });
+        } catch(e) {
+            await logLive('No property rows found or timeout waiting.', 'warn');
+        }
 
         // Extract native listings from table
         // Tranzactionata / Pierduta might be greyed out, but they should be in the table

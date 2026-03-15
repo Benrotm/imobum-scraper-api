@@ -18,6 +18,9 @@ const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supaba
 // Sleep utility
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+// Keep track of active jobs to prevent double execution
+const activeJobs = new Set();
+
 // === OLX Detail Page Extraction ===
 async function extractOlxDetailData(detailPage, logLive) {
         const result = { phone: null, location: null };
@@ -769,8 +772,7 @@ app.post('/api/scrape-advanced', async (req, res) => {
         }
 });
 
-// Memory lock to prevent redundant executions caused by cloud network retries
-const activeJobs = new Set();
+
 
 // === DYNAMIC PARTNER AUTO-SCRAPER ===
 app.post('/api/run-dynamic-scrape', async (req, res) => {
@@ -1356,7 +1358,18 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 });
 
 const { runSoldImmofluxScrape } = require('./sold_immoflux');
-app.post('/api/run-dynamic-scrape-sold', runSoldImmofluxScrape);
+app.post('/api/run-dynamic-scrape-sold', async (req, res) => {
+    const { jobId } = req.body;
+    if (activeJobs.has(jobId)) {
+        return res.json({ message: 'Job already in progress' });
+    }
+    activeJobs.add(jobId);
+    try {
+        await runSoldImmofluxScrape(req, res);
+    } finally {
+        activeJobs.delete(jobId);
+    }
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
