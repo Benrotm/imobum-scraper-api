@@ -1355,6 +1355,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
         }
 });
 
+const { runSoldImmofluxScrape } = require('./sold_immoflux');
+app.post('/api/run-dynamic-scrape-sold', runSoldImmofluxScrape);
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
         console.log(`Scraper API listening on port ${PORT}`);
