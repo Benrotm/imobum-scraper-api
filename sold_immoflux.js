@@ -218,23 +218,30 @@ async function runSoldImmofluxScrape(req, res) {
         const extractionResult = await page.evaluate(() => {
             const rowElements = document.querySelectorAll('tr.model-item');
             const links = document.querySelectorAll('tr.model-item[data-url], a.title-link[data-url], td.title-td[data-url]');
+            const rawUrlsFound = [];
             const urls = [];
+            
             for (const el of links) {
                 const url = el.getAttribute('data-url') || el.href;
-                // Be more inclusive with keywords: properties, property, approperties
-                if (url && (url.includes('/property') || url.includes('/approperties'))) {
-                    const fullUrl = new URL(url, window.location.href).href;
-                    urls.push(fullUrl);
+                if (url) {
+                    rawUrlsFound.push(url);
+                    // Extremely permissive matching: just check if 'propert' is in the string 
+                    // (handles /properties, properties/, property, /approperties)
+                    if (url.toLowerCase().includes('propert')) {
+                        const fullUrl = new URL(url, window.location.href).href;
+                        urls.push(fullUrl);
+                    }
                 }
             }
             return {
                 rowCount: rowElements.length,
+                rawSample: rawUrlsFound.slice(0, 3), // Grab up to 3 raw URLs for debugging
                 urls: [...new Set(urls)]
             };
         });
 
         const propertyLinks = extractionResult.urls;
-        await logLive(`DOM Scan: Found ${extractionResult.rowCount} property rows. Extracted ${propertyLinks.length} valid URLs.`);
+        await logLive(`DOM Scan: Found ${extractionResult.rowCount} rows. Extracted ${propertyLinks.length} URLs. Raw Sample: ${JSON.stringify(extractionResult.rawSample)}`);
 
         // Now, we need to extract from the POPUP by clicking them or direct navigation
         for (const url of propertyLinks) {
