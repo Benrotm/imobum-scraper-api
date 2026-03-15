@@ -215,20 +215,26 @@ async function runSoldImmofluxScrape(req, res) {
 
         // Extract native listings from table
         // Tranzactionata / Pierduta might be greyed out, but they should be in the table
-        const propertyLinks = await page.evaluate(() => {
+        const extractionResult = await page.evaluate(() => {
+            const rowElements = document.querySelectorAll('tr.model-item');
             const links = document.querySelectorAll('tr.model-item[data-url], a.title-link[data-url], td.title-td[data-url]');
             const urls = [];
             for (const el of links) {
                 const url = el.getAttribute('data-url') || el.href;
-                if (url && url.includes('/approperties/') || url.includes('/property/')) {
+                // Be more inclusive with keywords: properties, property, approperties
+                if (url && (url.includes('/property') || url.includes('/approperties'))) {
                     const fullUrl = new URL(url, window.location.href).href;
                     urls.push(fullUrl);
                 }
             }
-            return [...new Set(urls)];
+            return {
+                rowCount: rowElements.length,
+                urls: [...new Set(urls)]
+            };
         });
 
-        await logLive(`Found ${propertyLinks.length} URLs on the page.`);
+        const propertyLinks = extractionResult.urls;
+        await logLive(`DOM Scan: Found ${extractionResult.rowCount} property rows. Extracted ${propertyLinks.length} valid URLs.`);
 
         // Now, we need to extract from the POPUP by clicking them or direct navigation
         for (const url of propertyLinks) {
