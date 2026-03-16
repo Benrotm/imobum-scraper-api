@@ -247,14 +247,22 @@ async function runSoldImmofluxScrape(req, res) {
         for (const url of propertyLinks) {
             if (await isJobStopped()) break;
 
-            const existingCheck = await activeSupabase.from('scraped_urls').select('url').eq('url', url).maybeSingle();
-            if (existingCheck.data) {
-                totalSkipped++;
-                if (mode === 'watcher') {
-                    await logLive('Watcher mode found existing URL. Aborting batch.');
-                    break;
+            if (activeSupabase) {
+                // Check if this property is already in Market Insights
+                const { data: alreadyInInsights } = await activeSupabase
+                    .from('market_insights')
+                    .select('id')
+                    .eq('original_url', url)
+                    .maybeSingle();
+
+                if (alreadyInInsights) {
+                    totalSkipped++;
+                    if (mode === 'watcher') {
+                        await logLive('Watcher mode found existing Market Insight. Aborting batch.');
+                        break;
+                    }
+                    continue;
                 }
-                continue;
             }
 
             await logLive(`Processing [Sold Property]: ${url}`);
