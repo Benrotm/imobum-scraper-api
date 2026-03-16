@@ -279,68 +279,83 @@ async function runSoldImmofluxScrape(req, res) {
                 await detailPage.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
                 // Try to extract mapping fields
-                popupData = await detailPage.evaluate((mapConfig) => {
+                popupData = await detailPage.evaluate(() => {
                     const result = {};
-                    // We iterate through every label-value pair in the standard Immoflux view
-                    // Immoflux layouts: <dt>Label</dt><dd>Value</dd> OR <label>Label</label><span>Value</span> OR <th>Label</th><td>Value</td>
-                    const allNodes = document.querySelectorAll('dt, label, th, td.text-muted, p, span.text-muted');
-                    
                     const getText = (el) => el ? el.textContent.trim().replace(/\s+/g, ' ') : '';
                     
-                    for (const node of allNodes) {
-                        const labelText = getText(node);
-                        if (!labelText) continue;
+                    // 1. Extract from Slide Panel if present
+                    const panel = document.querySelector('.slidePanel');
+                    const root = panel || document;
 
-                        Object.keys(mapConfig).forEach(destKey => {
-                            const expectedLabel = mapConfig[destKey];
-                            if (expectedLabel && labelText.toLowerCase().includes(expectedLabel.toLowerCase())) {
-                                // Find the subsequent value container depending on layout
-                                let nextNode = node.nextElementSibling;
-                                if (node.tagName === 'TH') {
-                                    result[destKey] = getText(nextNode);
-                                } else if (node.tagName === 'DT') {
-                                    result[destKey] = getText(nextNode);
-                                } else {
-                                     // Might be parent's next sibling or direct next sibling
-                                     const container = node.parentElement;
-                                     if (container) {
-                                         const valNode = node.nextElementSibling || container.querySelector('span:not(.text-muted), strong, p:not(.text-muted), div:not(.text-muted)');
-                                         if (valNode) result[destKey] = getText(valNode);
-                                     }
-                                }
-                            }
-                        });
-                        
-                        // Special Hardcoded rules
-                        if (labelText.toLowerCase().includes('zile pe piata') || labelText.toLowerCase().includes('days on market')) {
-                            const valNode = node.nextElementSibling || node.parentElement.querySelector('strong, span, div:not([class])');
-                            if (valNode) daysOnMarket = getText(valNode);
-                        }
-                    }
-
-                    // Look for Days On Market specifically anywhere in DOM if not found
-                    if (!result['days_on_market']) {
-                         const match = document.body.innerText.match(/(\d+)\s*(zile pe piata|days on market)/i);
-                         if (match) result['days_on_market'] = match[1];
-                    }
-
-                    // Extract all images from carousel
-                    const imgs = Array.from(document.querySelectorAll('.owl-carousel img, .gallery img, .fotorama img')).map(img => img.src);
+                    // Title
+                    result['title'] = getText(root.querySelector('.slidePanel-header h4, h4.page-title, h1, h2.title'));
                     
-                    // Title and Description
-                    result['title'] = document.querySelector('h1, h2.title')?.textContent?.trim();
-                    result['description'] = document.querySelector('.description, #description, .details-desc')?.textContent?.trim();
-                    result['price'] = document.querySelector('.price, .text-price, .h3 span')?.textContent?.trim();
+                    // Specific Label Mapping
+                    const labels = Array.from(root.querySelectorAll('span.text-muted, label, dt, th, p.text-muted'));
+                    
+                    const findValue = (labelSelector, textMatch) => {
+                        const labelEl = labels.find(l => getText(l).toLowerCase().includes(textMatch.toLowerCase()));
+                        if (!labelEl) return null;
+                        
+                        // Value is usually the next sibling or a child of the next sibling
+                        let valNode = labelEl.nextElementSibling;
+                        if (!valNode && labelEl.parentElement) {
+                            valNode = Array.from(labelEl.parentElement.children).find(c => c !== labelEl && !c.classList.contains('text-muted'));
+                        }
+                        return getText(valNode);
+                    };
 
+                    // Extract key fields using labels
+                    const roomsRaw = findValue('span', 'Camere:') || findValue('label', 'Camere:');
+                    if (roomsRaw) result['rooms'] = roomsRaw.match(/\d+/)?.[0];
+
+                    const areaRaw = findValue('span', 'Suprafata utila:') || findValue('label', 'Suprafata utila:');
+                    if (areaRaw) result['usable_area'] = areaRaw.match(/[\d,.]+/)?.[0];
+
+                    const yearRaw = findValue('span', 'An constructie:') || findValue('label', 'An constructie:');
+                    if (yearRaw) result['year_built'] = yearRaw.match(/\d+/)?.[0];
+
+                    // Price Extraction
+                    const listingPriceRaw = findValue('span', 'Pret:') || findValue('label', 'Pret:');
+                    const soldPriceRaw = findValue('span', 'Pret tranzactionare:') || findValue('label', 'Pret tranzactionare:');
+                    
+                    // Fallback to general price selectors
+                    const fallbackPrice = getText(root.querySelector('.price, .text-price, .h3 span, #price, #sold_price'));
+                    
+                    result['price'] = soldPriceRaw || listingPriceRaw || fallbackPrice;
+                    
+                    // Location
+                    const addressRaw = findValue('span', 'Adresa:') || findValue('label', 'Adresa:');
+                    if (addressRaw) {
+                        const parts = addressRaw.split(',').map(s => s.trim());
+                        result['city'] = parts[0];
+                        result['area'] = parts[1];
+                    }
+
+                    // Description
+                    result['description'] = getText(root.querySelector('.description, #description, .details-desc'));
+
+                    // Extract all images
+                    const imgs = Array.from(root.querySelectorAll('.owl-carousel img, .gallery img, .fotorama img, .slidePanel-inner img'))
+                        .map(img => img.src)
+                        .filter(src => src && !src.includes('base64'));
+                    
                     return { data: result, images: imgs };
-                }, config.mapping || {});
+                });
 
                 await detailPage.close();
 
-                if (popupData) {
+                if (popupData && popupData.data) {
                     const { data, images: imgList } = popupData;
                     
-                    // Transmit to NextJS webhook to store in Market Insights
+                    // Clean Price
+                    let cleanPrice = 0;
+                    if (data.price) {
+                        const pMatch = data.price.replace(/[^\d]/g, '');
+                        cleanPrice = parseInt(pMatch) || 0;
+                    }
+
+                    // Transmit to NextJS webhook
                     const transmitRes = await fetch(`${webhookBaseUrl}/api/admin/headless-dynamic-import-sold`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -351,11 +366,15 @@ async function runSoldImmofluxScrape(req, res) {
                                 is_sold_insight: true,
                                 raw_extracted_data: data,
                                 images: imgList,
-                                title: data.title,
-                                priceRaw: data.price,
+                                title: data.title || `Proprietate - ${referenceId}`,
+                                priceRaw: cleanPrice,
                                 description: data.description,
-                                days_on_market: data.days_on_market,
-                                status: 'Sold' // Marked for market insights explicitly
+                                rooms: parseInt(data.rooms) || 0,
+                                usable_area: parseFloat(data.usable_area?.replace(',', '.')) || 0,
+                                year_built: parseInt(data.year_built) || 0,
+                                city: data.city,
+                                area: data.area,
+                                status: 'Sold'
                             }
                         })
                     });
