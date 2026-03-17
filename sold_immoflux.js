@@ -86,18 +86,16 @@ async function runSoldImmofluxScrape(req, res) {
             if (await cookieBtn.isVisible({ timeout: 2000 })) await cookieBtn.click();
         } catch (e) { }
 
-        // Original working login method
         await logLive(`Typing credentials for ${immofluxUser}...`, 'info');
         try {
             await page.waitForSelector('#inputEmail', { timeout: 10000 });
-            await page.locator('#inputEmail').fill(immofluxUser);
-            await page.locator('#inputPassword').fill(immofluxPass);
-            
-            await logLive('Submitting login form via Enter key...');
+            await page.type('#inputEmail', immofluxUser);
+            await page.type('#inputPassword', immofluxPass);
             await Promise.all([
                 page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => null),
-                page.keyboard.press('Enter')
+                page.click('button[type="submit"]')
             ]);
+            await logLive('Authentication successful.', 'success');
         } catch(authErr) {
             await logLive(`Login input failed: ${authErr.message}`, 'error');
             throw authErr;
