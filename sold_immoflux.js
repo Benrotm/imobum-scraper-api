@@ -111,17 +111,28 @@ async function runSoldImmofluxScrape(req, res) {
         await page.waitForTimeout(2000);
 
         // Apply Filters via UI
+        await logLive('Ensuring page is stable (networkidle)...');
+        try {
+            await page.waitForLoadState('networkidle', { timeout: 30000 });
+        } catch(e) {
+            await logLive('Notice: networkidle timeout, proceeding anyway...', 'info');
+        }
+
         await logLive('Opening filter wrapper...');
         // Open filter panel if not open
         await logLive('Checking filter panel state...');
         try {
-            const filterWrapper = page.locator('#filter-wrapper');
+            // Wait for ANY evidence of a filter wrapper in the DOM
+            const wrapperSelector = '#filter-wrapper, div.panel.collapse';
+            await page.waitForSelector(wrapperSelector, { state: 'attached', timeout: 30000 });
+            
+            const filterWrapper = page.locator(wrapperSelector).first();
             // Look for any reasonable filter toggle button
-            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter, i.ti-filter').first();
+            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter, i.ti-filter, .btn-primary.btn-outline.btn-round i.ti-filter').first();
             
             let isOpen = false;
-            // Try up to 3 times to ensure it's open
-            for (let i = 0; i < 3; i++) {
+            // Try up to 4 times to ensure it's open
+            for (let i = 0; i < 4; i++) {
                 const box = await filterWrapper.boundingBox();
                 if (box && box.height > 10) {
                     isOpen = true;
@@ -130,14 +141,22 @@ async function runSoldImmofluxScrape(req, res) {
                 }
                 await logLive(`Clicking filter toggle (attempt ${i+1})...`);
                 await filterBtn.click({ force: true });
-                await page.waitForTimeout(2000); // Wait for transition
+                await page.waitForTimeout(3000); // Wait longer for transition
+                
+                // Extra check: sometimes we need to wait for the 'in' class
+                const classes = await filterWrapper.getAttribute('class') || '';
+                if (classes.includes('in')) {
+                    isOpen = true;
+                    await logLive('Filter panel confirmed open via class presence.');
+                    break;
+                }
             }
             
             if (!isOpen) {
-                await logLive('Warning: Filter panel height check failed, but proceeding...', 'warn');
+                await logLive('Warning: Header filter panel expansion not detected, but elements might be present...', 'warn');
             }
         } catch(e) {
-            await logLive(`Notice: Problem toggling filter panel: ${e.message}`, 'info');
+            await logLive(`Notice: Fatal problem toggling filter panel: ${e.message}`, 'error');
         }
 
         const applySelectizeFilter = async (selectorOrLabel, values, isId = false) => {
@@ -212,20 +231,41 @@ async function runSoldImmofluxScrape(req, res) {
                 }
             }
         };
-
         // Stadiu filter - The site allows only ONE stadiu at a time.
         // If user provided multiple, we'll only use the FIRST one for this page run.
         if (config.stadiu_filter && config.stadiu_filter.length > 0) {
-            // Try both 'select#status' (blitz timely) and 'select#filter-status-eq' (older immoflux)
-            try {
-                if (await page.locator('select#status').count() > 0) {
-                    await applySelectizeFilter('select#status', [config.stadiu_filter[0]], true);
-                } else {
-                    await applySelectizeFilter('select#filter-status-eq', [config.stadiu_filter[0]], true);
+            const val = config.stadiu_filter[0];
+            await logLive(`Attempting to apply Stadiu filter: ${val}`);
+            
+            // Comprehensive selector set for Stadiu
+            const selectors = [
+                'select#status',
+                'select[name="status[]"]',
+                'select#filter-status-eq',
+                'select[name="filter_status__eq"]'
+            ];
+
+            let applied = false;
+            for (const sel of selectors) {
+                try {
+                    if (await page.locator(sel).count() > 0) {
+                        await logLive(`Using selector: ${sel}`);
+                        await applySelectizeFilter(sel, [val], true);
+                        applied = true;
+                        break;
+                    }
+                } catch(e) {
+                    await logLive(`Notice: Failed with selector ${sel}: ${e.message}`, 'info');
                 }
-            } catch(e) {
-                await logLive(`Notice: Failed to set Stadiu filter with ID selectors: ${e.message}. Trying literal label "Stadiu"...`, 'info');
-                await applySelectizeFilter('Stadiu', [config.stadiu_filter[0]], false);
+            }
+
+            if (!applied) {
+                await logLive('Defaulting to label-based search for "Stadiu"...', 'info');
+                try {
+                    await applySelectizeFilter('Stadiu', [val], false);
+                } catch(e) {
+                    await logLive(`Error applying Stadiu filter: ${e.message}`, 'error');
+                }
             }
         }
 
