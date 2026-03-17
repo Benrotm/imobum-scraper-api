@@ -283,50 +283,64 @@ async function runSoldImmofluxScrape(req, res) {
                     const result = {};
                     const getText = (el) => el ? el.textContent.trim().replace(/\s+/g, ' ') : '';
                     
-                    // 1. Extract from Slide Panel if present
+                    // 1. Root container (Slide Panel or Full Page)
                     const panel = document.querySelector('.slidePanel');
                     const root = panel || document;
 
-                    // Title
-                    result['title'] = getText(root.querySelector('.slidePanel-header h4, h4.page-title, h1, h2.title, .panel-title'));
+                    // Title extraction - Improved
+                    const titleEl = root.querySelector('.slidePanel-header h4, h4.page-title, h1, h2.title, .panel-title, .slidePanel-content h3');
+                    result['title'] = getText(titleEl);
                     
                     // All potential label elements
                     const labels = Array.from(root.querySelectorAll('span, label, dt, th, p, strong, div'));
                     
                     const findValue = (textMatch) => {
-                                const matchLower = textMatch.toLowerCase().trim().replace(/:$/, '');
-                                const labelEl = labels.find(l => {
-                                    const t = getText(l).toLowerCase().trim();
-                                    return t === matchLower || t === matchLower + ':' || t.startsWith(matchLower + ':');
-                                });
-                                if (!labelEl) return null;
-                                const fullText = getText(labelEl);
-                                if (fullText.toLowerCase().trim().startsWith(matchLower + ':')) {
-                                     const val = fullText.substring(fullText.toLowerCase().indexOf(matchLower) + matchLower.length).replace(/^[\s:]+/, '').trim();
-                                     if (val) return val;
-                                }
-                                if (labelEl.nextElementSibling) return getText(labelEl.nextElementSibling);
-                                const parent = labelEl.parentElement;
-                                if (parent) {
-                                    const pText = getText(parent);
-                                    const lText = getText(labelEl);
-                                    const val = pText.replace(lText, '').trim();
-                                    if (val && val.length > 0) return val;
-                                }
-                                return null;
-                            };
+                        const labelEl = labels.find(l => {
+                            const t = getText(l);
+                            // Match exact label or label with colon or label containing the text
+                            const lowerT = t.toLowerCase();
+                            const lowerMatch = textMatch.toLowerCase();
+                            return lowerT === lowerMatch || 
+                                   lowerT === (lowerMatch + ':') ||
+                                   (lowerT.includes(lowerMatch) && t.length < textMatch.length + 5);
+                        });
+                        
+                        if (!labelEl) return null;
+                        
+                        // Scenario 1: Value is in the next element sibling
+                        if (labelEl.nextElementSibling) {
+                            const nextText = getText(labelEl.nextElementSibling);
+                            if (nextText) return nextText;
+                        }
+                        
+                        // Scenario 2: Value is in a sibling's strong/span child
+                        const parent = labelEl.parentElement;
+                        if (parent) {
+                            const strong = parent.querySelector('strong, span.blue-600, .value');
+                            if (strong && strong !== labelEl) return getText(strong);
+                            
+                            // Scenario 3: Value is text following the label inside the same parent
+                            const pText = getText(parent);
+                            const lText = getText(labelEl);
+                            const val = pText.replace(lText, '').trim().replace(/^:\s*/, '');
+                            if (val && val.length > 0) return val;
+                        }
+                        
+                        return null;
+                    };
 
                     // Extract key fields
-                    result['rooms'] = findValue('Camere');
-                    result['usable_area'] = findValue('Suprafata utila');
-                    result['year_built'] = findValue('An constructie');
+                    result['rooms'] = findValue('Camere') || findValue('Nr. Camere');
+                    result['usable_area'] = findValue('Suprafata utila') || findValue('Suprafata');
+                    result['year_built'] = findValue('An constructie') || findValue('Anul');
 
-                    // Price Extraction - Try multiple labels
-                    result['price'] = findValue('Pret tranzactionare') || findValue('Pret');
+                    // Price Extraction - Try multiple labels and specific IDs
+                    result['price'] = findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
                     
-                    // Fallback to explicit elements
-                    if (!result['price']) {
-                        result['price'] = getText(root.querySelector('.price, .text-price, h3 strong, h3 .blue-600, .blue-600, .blue-grey-600, #price, #sold_price, .listing-price'));
+                    // Fallback to explicit elements (IDs are very common in Immoflux)
+                    if (!result['price'] || result['price'] === '0' || result['price'] === '') {
+                        const priceEl = root.querySelector('#sold_price, .price, .text-price, .h3 strong span.blue-600, .listing-price, #price');
+                        if (priceEl) result['price'] = getText(priceEl);
                     }
                     
                     // Location
@@ -338,7 +352,7 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Description
-                    result['description'] = getText(root.querySelector('.description, #description, .details-desc, .property-description'));
+                    result['description'] = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
 
                     // Extract all images
                     const imgs = Array.from(root.querySelectorAll('img'))
