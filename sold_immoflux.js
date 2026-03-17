@@ -45,22 +45,12 @@ async function runSoldImmofluxScrape(req, res) {
 
         const launchOptions = {
             headless: true,
-            args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--disable-setuid-sandbox', '--window-size=1920,1080']
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
         };
-
-        if (proxyConfig && proxyConfig.is_active && proxyConfig.host && proxyConfig.port) {
-            await logLive(`[PROXY] Routing via ${proxyConfig.host}:${proxyConfig.port}`, 'info');
-            launchOptions.proxy = { server: `http://${proxyConfig.host}:${proxyConfig.port}` };
-            if (proxyConfig.username && proxyConfig.password) {
-                launchOptions.proxy.username = proxyConfig.username;
-                launchOptions.proxy.password = proxyConfig.password;
-            }
-        }
 
         browser = await chromium.launch(launchOptions);
         const context = await browser.newContext({
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            viewport: { width: 1920, height: 1080 }
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
         });
 
         // Mask automation
@@ -77,8 +67,10 @@ async function runSoldImmofluxScrape(req, res) {
 
         const page = await context.newPage();
 
-        await logLive(`Authenticating at blitz.immoflux.ro/login with user ${immofluxUser}`);
-        await page.goto('https://blitz.immoflux.ro/login', { waitUntil: 'load', timeout: 30000 });
+        const loginUrl = config.url.includes('fluxmls.immoflux.ro') ? 'https://fluxmls.immoflux.ro/login' :
+            config.url.includes('blitz.immoflux.ro') ? 'https://blitz.immoflux.ro/login' : 'https://immoflux.ro/login';
+        await logLive(`Authenticating at ${loginUrl} with user ${immofluxUser}`);
+        await page.goto(loginUrl, { waitUntil: 'load', timeout: 45000 });
         
         // Handle Cookie Consent if exists
         try {
