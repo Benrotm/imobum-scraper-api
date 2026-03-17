@@ -277,6 +277,11 @@ async function runSoldImmofluxScrape(req, res) {
                 // which opens a full page view or a modal if we use the specific route.
                 const detailPage = await context.newPage();
                 await detailPage.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+                
+                // Wait for any content to be visible
+                try {
+                    await detailPage.waitForSelector('h3, .slidePanel-header, h1', { timeout: 15000 });
+                } catch(e) {}
 
                 // Try to extract mapping fields
                 popupData = await detailPage.evaluate(() => {
@@ -288,68 +293,85 @@ async function runSoldImmofluxScrape(req, res) {
                     const root = panel || document;
 
                     // Title extraction - Improved
-                    const titleEl = root.querySelector('.slidePanel-header h4, h4.page-title, h1, h2.title, .panel-title, .slidePanel-content h3');
-                    result['title'] = getText(titleEl);
-
-                    // If title is generic or missing, try a more aggressive search
-                    if (!result['title'] || result['title'].length < 5) {
-                        const h3 = root.querySelector('h3, h2, h4');
-                        if (h3) result['title'] = getText(h3);
+                    const h1Title = root.querySelector('h1')?.textContent || '';
+                    let bestTitle = h1Title;
+                    
+                    const allH3 = Array.from(root.querySelectorAll('h3'));
+                    for (const h3 of allH3) {
+                        const t = getText(h3);
+                        // If it's descriptive (not meta-text)
+                        if (t && !t.toLowerCase().includes('pret') && !t.toLowerCase().includes('proprietate') && t.length > 5) {
+                            bestTitle = t;
+                            break;
+                        }
                     }
                     
+                    result['title'] = bestTitle;
+
                     // All potential label elements
-                    const labels = Array.from(root.querySelectorAll('span, label, dt, th, p, strong, div'));
+                    const labels = Array.from(root.querySelectorAll('span, label, dt, th, p, strong, div, h3, h4'));
                     
                     const findValue = (textMatch) => {
                         const labelEl = labels.find(l => {
                             const t = getText(l);
-                            // Match exact label or label with colon or label containing the text
                             const lowerT = t.toLowerCase();
                             const lowerMatch = textMatch.toLowerCase();
-                            return lowerT === lowerMatch || 
-                                   lowerT === (lowerMatch + ':') ||
-                                   (lowerT.includes(lowerMatch) && t.length < textMatch.length + 5);
+                            return lowerT === lowerMatch || lowerT === (lowerMatch + ':');
                         });
                         
                         if (!labelEl) return null;
                         
-                        // Scenario 1: Value is in the next element sibling
-                        if (labelEl.nextElementSibling) {
-                            const nextText = getText(labelEl.nextElementSibling);
-                            if (nextText) return nextText;
-                        }
-                        
-                        // Scenario 2: Value is in a sibling's strong/span child
                         const parent = labelEl.parentElement;
                         if (parent) {
-                            const strong = parent.querySelector('strong, span.blue-600, .value');
-                            if (strong && strong !== labelEl) return getText(strong);
-                            
-                            // Scenario 3: Value is text following the label inside the same parent
-                            const pText = getText(parent);
-                            const lText = getText(labelEl);
-                            const val = pText.replace(lText, '').trim().replace(/^:\s*/, '');
-                            if (val && val.length > 0) return val;
+                            const strong = parent.querySelector('strong');
+                            if (strong) return getText(strong);
+                        }
+                        
+                        if (labelEl.nextElementSibling) {
+                            return getText(labelEl.nextElementSibling);
                         }
                         
                         return null;
                     };
 
-                    // Extract key fields
-                    result['rooms'] = findValue('Camere') || findValue('Nr. Camere');
-                    result['usable_area'] = findValue('Suprafata utila') || findValue('Suprafata');
-                    result['year_built'] = findValue('An constructie') || findValue('Anul');
+                    const findFeature = (labelPart) => {
+                        const allElems = Array.from(root.querySelectorAll('div, span, td, h4, label'));
+                        const match = allElems.find(d => {
+                            const t = getText(d);
+                            // Avoid matching the title itself if it contains the label
+                            return t.toLowerCase().includes(labelPart.toLowerCase()) && t.length < labelPart.length + 30;
+                        });
+                        if (match) {
+                            const strong = match.querySelector('strong');
+                            if (strong) return getText(strong);
+                            
+                            const t = getText(match);
+                            const valMatch = t.match(/:\s*([\d.,]+)/) || t.match(/([\d.,]+)\s*(?:m|km|€|camere)/i);
+                            if (valMatch) return valMatch[1];
+                        }
+                        return null;
+                    };
 
-                    // Price Extraction - Try multiple labels and specific IDs
+                    result['rooms'] = findFeature('Camere');
+                    result['usable_area'] = findFeature('Suprafata utila') || findFeature('Suprafata utilă') || findFeature('Suprafata teren') || findFeature('Suprafata');
+                    result['year_built'] = findFeature('An constructie') || findFeature('Anul');
+
                     result['price'] = findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
                     
-                    // Fallback to explicit elements (IDs are very common in Immoflux)
                     if (!result['price'] || result['price'] === '0' || result['price'] === '') {
-                        const priceEl = root.querySelector('#sold_price, .price, .text-price, .h3 strong span.blue-600, .listing-price, #price');
-                        if (priceEl) result['price'] = getText(priceEl);
+                        const priceSpan = root.querySelector('span.blue-600');
+                        const priceStrong = root.querySelector('strong span.blue-600');
+                        const priceH3 = Array.from(root.querySelectorAll('h3')).find(h => getText(h).toLowerCase().includes('pret'));
+                        
+                        if (priceH3) {
+                            result['price'] = getText(priceH3).replace(/Pret:\s*/i, '');
+                        } else if (priceStrong) {
+                            result['price'] = getText(priceStrong);
+                        } else if (priceSpan) {
+                            result['price'] = getText(priceSpan);
+                        }
                     }
                     
-                    // Location
                     const addressRaw = findValue('Adresa');
                     if (addressRaw) {
                         const parts = addressRaw.split(',').map(s => s.trim());
@@ -373,10 +395,12 @@ async function runSoldImmofluxScrape(req, res) {
                 if (popupData && popupData.data) {
                     const { data, images: imgList } = popupData;
                     
-                    // Clean Price
+                    // Clean Price - handle cases like "178.000€ (2.373€/mp)"
                     let cleanPrice = 0;
                     if (data.price) {
-                        const pMatch = data.price.replace(/[^\d]/g, '');
+                        // Take everything before the first '('
+                        const mainPart = data.price.split('(')[0];
+                        const pMatch = mainPart.replace(/[^\d]/g, '');
                         cleanPrice = parseInt(pMatch) || 0;
                     }
 
