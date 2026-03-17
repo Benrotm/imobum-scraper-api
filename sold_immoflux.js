@@ -294,30 +294,27 @@ async function runSoldImmofluxScrape(req, res) {
                     const labels = Array.from(root.querySelectorAll('span, label, dt, th, p, strong, div'));
                     
                     const findValue = (textMatch) => {
-                        const labelEl = labels.find(l => {
-                            const t = getText(l);
-                            // Match exact label or label with colon
-                            return t.toLowerCase() === textMatch.toLowerCase() || 
-                                   t.toLowerCase() === (textMatch.toLowerCase() + ':') ||
-                                   (t.toLowerCase().includes(textMatch.toLowerCase()) && t.length < textMatch.length + 5);
-                        });
-                        
-                        if (!labelEl) return null;
-                        
-                        // Try siblings
-                        if (labelEl.nextElementSibling) return getText(labelEl.nextElementSibling);
-                        
-                        // Try parent text node (strip the label)
-                        const parent = labelEl.parentElement;
-                        if (parent) {
-                            const pText = getText(parent);
-                            const lText = getText(labelEl);
-                            const val = pText.replace(lText, '').trim();
-                            if (val && val.length > 0) return val;
-                        }
-                        
-                        return null;
-                    };
+                                const matchLower = textMatch.toLowerCase().trim().replace(/:$/, '');
+                                const labelEl = labels.find(l => {
+                                    const t = getText(l).toLowerCase().trim();
+                                    return t === matchLower || t === matchLower + ':' || t.startsWith(matchLower + ':');
+                                });
+                                if (!labelEl) return null;
+                                const fullText = getText(labelEl);
+                                if (fullText.toLowerCase().trim().startsWith(matchLower + ':')) {
+                                     const val = fullText.substring(fullText.toLowerCase().indexOf(matchLower) + matchLower.length).replace(/^[\s:]+/, '').trim();
+                                     if (val) return val;
+                                }
+                                if (labelEl.nextElementSibling) return getText(labelEl.nextElementSibling);
+                                const parent = labelEl.parentElement;
+                                if (parent) {
+                                    const pText = getText(parent);
+                                    const lText = getText(labelEl);
+                                    const val = pText.replace(lText, '').trim();
+                                    if (val && val.length > 0) return val;
+                                }
+                                return null;
+                            };
 
                     // Extract key fields
                     result['rooms'] = findValue('Camere');
@@ -329,7 +326,7 @@ async function runSoldImmofluxScrape(req, res) {
                     
                     // Fallback to explicit elements
                     if (!result['price']) {
-                        result['price'] = getText(root.querySelector('.price, .text-price, .h3 span, #price, #sold_price, .listing-price'));
+                        result['price'] = getText(root.querySelector('.price, .text-price, h3 strong, h3 .blue-600, .blue-600, .blue-grey-600, #price, #sold_price, .listing-price'));
                     }
                     
                     // Location
