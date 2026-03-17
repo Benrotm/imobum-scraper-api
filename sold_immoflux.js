@@ -110,21 +110,37 @@ async function runSoldImmofluxScrape(req, res) {
         await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 45000 });
         await page.waitForTimeout(2000);
 
-        // Apply Filters via UI
+        await logLive(`Current URL: ${page.url()}`);
+        await logLive(`Page Title: ${await page.title()}`);
         await logLive('Ensuring page is stable (networkidle)...');
         try {
             await page.waitForLoadState('networkidle', { timeout: 30000 });
         } catch(e) {
-            await logLive('Notice: networkidle timeout, proceeding anyway...', 'info');
+            await logLive(`Notice: networkidle timeout (${e.message}), proceeding anyway...`, 'info');
         }
+
+        // Diagnostic: Dump top-level IDs if we fear missing elements
+        const allIds = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('[id]')).map(el => el.id).filter(id => id.length > 0).slice(0, 50);
+        });
+        await logLive(`Found first 50 IDs: ${allIds.join(', ')}`, 'info');
 
         await logLive('Opening filter wrapper...');
         // Open filter panel if not open
         await logLive('Checking filter panel state...');
         try {
             // Wait for ANY evidence of a filter wrapper in the DOM
-            const wrapperSelector = '#filter-wrapper, div.panel.collapse';
-            await page.waitForSelector(wrapperSelector, { state: 'attached', timeout: 30000 });
+            // Using a broader selector and longer timeout
+            const wrapperSelector = '#filter-wrapper, div.panel.collapse, #filter';
+            await logLive(`Waiting for selector: ${wrapperSelector}...`);
+            
+            try {
+                await page.waitForSelector(wrapperSelector, { state: 'attached', timeout: 45000 });
+            } catch(te) {
+                const bodyContent = await page.evaluate(() => document.body.innerText.substring(0, 500));
+                await logLive(`FATAL: Filter wrapper NOT attached after 45s. URL: ${page.url()}. Body start: ${bodyContent}`, 'error');
+                throw te;
+            }
             
             const filterWrapper = page.locator(wrapperSelector).first();
             // Look for any reasonable filter toggle button
@@ -134,29 +150,24 @@ async function runSoldImmofluxScrape(req, res) {
             // Try up to 4 times to ensure it's open
             for (let i = 0; i < 4; i++) {
                 const box = await filterWrapper.boundingBox();
-                if (box && box.height > 10) {
+                const classes = await filterWrapper.getAttribute('class') || '';
+                
+                if ((box && box.height > 10) || classes.includes('in')) {
                     isOpen = true;
-                    await logLive('Filter panel confirmed open.');
+                    await logLive(`Filter panel confirmed open (Height: ${box?.height || 'N/A'}, Classes: ${classes})`);
                     break;
                 }
+                
                 await logLive(`Clicking filter toggle (attempt ${i+1})...`);
                 await filterBtn.click({ force: true });
-                await page.waitForTimeout(3000); // Wait longer for transition
-                
-                // Extra check: sometimes we need to wait for the 'in' class
-                const classes = await filterWrapper.getAttribute('class') || '';
-                if (classes.includes('in')) {
-                    isOpen = true;
-                    await logLive('Filter panel confirmed open via class presence.');
-                    break;
-                }
+                await page.waitForTimeout(4000); // Give it plenty of time
             }
             
             if (!isOpen) {
-                await logLive('Warning: Header filter panel expansion not detected, but elements might be present...', 'warn');
+                await logLive('Warning: Header filter panel expansion not detected via height/class, but elements might be present...', 'warn');
             }
         } catch(e) {
-            await logLive(`Notice: Fatal problem toggling filter panel: ${e.message}`, 'error');
+            await logLive(`Notice: Problem toggling filter panel: ${e.message}`, 'error');
         }
 
         const applySelectizeFilter = async (selectorOrLabel, values, isId = false) => {
