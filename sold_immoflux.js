@@ -290,6 +290,12 @@ async function runSoldImmofluxScrape(req, res) {
                     // Title extraction - Improved
                     const titleEl = root.querySelector('.slidePanel-header h4, h4.page-title, h1, h2.title, .panel-title, .slidePanel-content h3');
                     result['title'] = getText(titleEl);
+
+                    // If title is generic or missing, try a more aggressive search
+                    if (!result['title'] || result['title'].length < 5) {
+                        const h3 = root.querySelector('h3, h2, h4');
+                        if (h3) result['title'] = getText(h3);
+                    }
                     
                     // All potential label elements
                     const labels = Array.from(root.querySelectorAll('span, label, dt, th, p, strong, div'));
