@@ -508,8 +508,8 @@ async function runSoldImmofluxScrape(req, res) {
 
                     // Extract all images
                     const imgs = Array.from(root.querySelectorAll('img'))
-                        .map(img => img.src)
-                        .filter(src => src && (src.includes('approperties') || src.includes('property') || src.includes('imobum')) && !src.includes('base64'));
+                        .map(img => img.src || img.getAttribute('data-src'))
+                        .filter(src => src && typeof src === 'string' && !src.includes('base64') && !src.includes('logo') && !src.includes('avatar') && !src.includes('icon'));
                     
                     return { data: result, images: imgs };
                 });
@@ -547,6 +547,7 @@ async function runSoldImmofluxScrape(req, res) {
                                 year_built: parseInt(data.year_built) || 0,
                                 city: data.city,
                                 area: data.area,
+                                days_on_market: data.days_on_market || null,
                                 status: 'Sold'
                             }
                         })
