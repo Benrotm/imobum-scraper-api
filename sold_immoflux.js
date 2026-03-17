@@ -90,13 +90,8 @@ async function runSoldImmofluxScrape(req, res) {
         await page.locator('input[name="password"], #inputPassword').fill(immofluxPass);
         
         // Try to click "Remember me" if it exists
-        try {
-            const rememberMe = page.locator('input[type="checkbox"], #inputCheckbox').first();
-            if (await rememberMe.count() > 0) {
-                await rememberMe.check({ force: true });
-                await logLive('Checked [Remember me].');
-            }
-        } catch(e) {}
+        // REMOVED 'Remember Me' check here as it caused 'Datele de identificare nu pot fi confirmate'
+        // on blitz.immoflux.ro
 
         await logLive('Submitting login form...');
         await Promise.all([
@@ -218,67 +213,71 @@ async function runSoldImmofluxScrape(req, res) {
             
             for (const val of values) {
                 if (!val) continue;
-                await logLive(`Attempting to set filter [${selectorOrLabel}]: ${val}`);
+                await logLive(`Attempting to apply selectize filter [${selectorOrLabel}]: ${val}`);
                 
                 try {
-                    let controlSelector;
+                    let inputSelector;
                     if (isId) {
-                        // More robust selector for Selectize: target both possible patterns
-                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input, ${selectorOrLabel} + .selectize-control .selectize-input`;
+                        // Target the actual underlying input element inside the selectize control
+                        inputSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input input, ${selectorOrLabel} + .selectize-control .selectize-input input`;
                     } else {
-                        // Fallback to label search
-                        controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
-                        // Or if directly in a div.col
-                        if (await page.locator(`xpath=${controlSelector}`).count() === 0) {
-                            controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/parent::div//div[contains(@class, "selectize-input")]`;
+                        // Fallback to label search, targeting the inner input
+                        inputSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]//input`;
+                        if (await page.locator(`xpath=${inputSelector}`).count() === 0) {
+                            inputSelector = `//label[contains(text(), "${selectorOrLabel}")]/parent::div//div[contains(@class, "selectize-input")]//input`;
                         }
                     }
 
-                    const inputLoc = isId ? page.locator(controlSelector).first() : page.locator(`xpath=${controlSelector}`).first();
+                    const inputLoc = isId ? page.locator(inputSelector).first() : page.locator(`xpath=${inputSelector}`).first();
                     
                     // Force it to be visible by scrolling if needed
                     await inputLoc.scrollIntoViewIfNeeded();
 
                     if (await inputLoc.count() === 0 && !isId) {
                         // Try another label variant if first fails
-                        await logLive(`Label [${selectorOrLabel}] not found, trying with comma variant...`);
-                        const altPath = `//label[contains(text(), "${selectorOrLabel.replace('t', 'ț')}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
+                        const altPath = `//label[contains(text(), "${selectorOrLabel.replace('t', 'ț')}")]/following-sibling::div//div[contains(@class, "selectize-input")]//input`;
                         const altLoc = page.locator(`xpath=${altPath}`);
                         if (await altLoc.count() > 0) {
-                            await altLoc.click();
+                            await altLoc.click({ force: true });
                         } else {
                             throw new Error(`Control for ${selectorOrLabel} not found`);
                         }
                     } else {
-                        // Check visibility but don't strictly wait if it's there
                         await inputLoc.click({ force: true });
                     }
 
-                    await page.waitForTimeout(500);
+                    await page.waitForTimeout(1000);
                     
                     // Clear existing if any (programmatically for selectize)
                     await page.keyboard.press('Control+A');
                     await page.keyboard.press('Backspace');
                     
-                    await page.keyboard.type(val, { delay: 150 });
-                    await page.waitForTimeout(2000); // Wait longer for dropdown results
+                    // Keyboard typing approach (robust, same as regular Immoflux scraper)
+                    await page.keyboard.type(val, { delay: 100 });
+                    await page.waitForTimeout(1000); // Wait for dropdown results to render
                     
                     // Listen for filter response
                     const filterResponsePromise = page.waitForResponse(r => 
                         r.url().includes('properties/filter') && r.status() === 200,
-                        { timeout: 10000 }
+                        { timeout: 15000 }
                     ).catch(() => null);
 
                     await page.keyboard.press('Enter');
-                    await filterResponsePromise;
-                    await page.waitForTimeout(3000); // Wait for list to update
-                    await logLive(`Filter applied successfully: ${val}`);
+                    
+                    const ajaxRes = await filterResponsePromise;
+                    if (ajaxRes) {
+                        await logLive(`Filter AJAX refresh confirmed for ${val}.`, 'success');
+                    } else {
+                        await logLive(`AJAX refresh not detected. Assuming native state transition.`, 'info');
+                    }
+                    
+                    await page.waitForTimeout(2000); // Wait for list to update in DOM
 
                 } catch(e) {
                     await logLive(`Could not set filter ${val}: ${e.message}`, 'warn');
                     // Take screenshot on failure for debugging
                     try {
-                        const shotPath = `filter_error_${selectorOrLabel}_${Date.now()}.png`;
+                        const shotPath = `filter_error_${selectorOrLabel.replace(/[^a-zA-Z0-9]/g, '')}_${Date.now()}.png`;
                         await page.screenshot({ path: shotPath });
                         await logLive(`Screenshot saved as ${shotPath}`, 'info');
                     } catch(ss) {}
