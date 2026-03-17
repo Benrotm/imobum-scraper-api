@@ -100,17 +100,30 @@ async function runSoldImmofluxScrape(req, res) {
 
         await logLive('Submitting login form...');
         await Promise.all([
-            page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }),
+            page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => null),
             page.locator('button[type="submit"], input[type="submit"]').first().click()
         ]);
         
+        // Check for login errors
+        const errorAlert = page.locator('.alert-danger, .error-message, .help-block-error');
+        if (await errorAlert.count() > 0 && await errorAlert.first().isVisible()) {
+            const errText = await errorAlert.first().innerText();
+            await logLive(`Login failed: ${errText}`, 'error');
+            throw new Error(`Authentication failed: ${errText}`);
+        }
+
         // VERIFY LOGIN
         const loggedInMarker = page.locator('.user-menu, a[href*="logout"], .ti-user, div.member-card');
+        let isAuthenticated = false;
         try {
-            await loggedInMarker.first().waitFor({ state: 'attached', timeout: 15000 });
+            await loggedInMarker.first().waitFor({ state: 'attached', timeout: 10000 });
+            isAuthenticated = true;
             await logLive(`Login verified. Welcome, ${await page.locator('.user-display-name, .member-name').first().innerText().catch(() => 'User')}`);
         } catch(e) {
-            await logLive('Warning: Logged-in marker not found, but proceeding to properties navigation anyway...', 'warn');
+            await logLive('Warning: Logged-in marker not found. Checking current URL...', 'warn');
+            if (page.url().includes('/login')) {
+                throw new Error('Authentication failed: Still on login page after submission.');
+            }
         }
 
         if (await isJobStopped()) {
@@ -125,7 +138,19 @@ async function runSoldImmofluxScrape(req, res) {
         }
 
         await logLive(`Navigating to ${targetUrl}`);
-        await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 45000 });
+        // Use a more robust goto that handles potential redirections
+        for (let i = 0; i < 2; i++) {
+            await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 45000 });
+            await page.waitForTimeout(2000);
+            
+            if (!page.url().includes('/login')) break;
+            await logLive(`Redirected to /login (attempt ${i+1}). Retrying navigation...`, 'warn');
+            await page.waitForTimeout(3000);
+        }
+
+        if (page.url().includes('/login')) {
+            throw new Error('Redirected to login page. Session might be invalid or bot protection triggered.');
+        }
         await page.waitForTimeout(2000);
 
         await logLive(`Current URL: ${page.url()}`);
