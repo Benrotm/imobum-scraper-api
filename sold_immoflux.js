@@ -114,7 +114,8 @@ async function runSoldImmofluxScrape(req, res) {
         await logLive('Opening filter wrapper...');
         // Open filter panel if not open
         try {
-            await page.waitForSelector('a[href="#filter-wrapper"]', { timeout: 5000 });
+            const filterBtn = 'a[href="#filter-wrapper"], a[data-type="filterbutton"]';
+            await page.waitForSelector(filterBtn, { timeout: 5000 });
             const filterWrapper = page.locator('#filter-wrapper');
             // If the wrapper is not visible, it's likely collapsed.
             // Note: isVisible() might return true if it's display:block but height 0.
@@ -140,7 +141,8 @@ async function runSoldImmofluxScrape(req, res) {
                     let controlSelector;
                     if (isId) {
                         // More robust selector for Selectize after a specific select
-                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input`;
+                        // Using adjacent or general sibling
+                        controlSelector = `${selectorOrLabel} + .selectize-control .selectize-input, ${selectorOrLabel} ~ .selectize-control .selectize-input`;
                     } else {
                         // Fallback to label search
                         controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
@@ -203,8 +205,8 @@ async function runSoldImmofluxScrape(req, res) {
         // If user provided multiple, we'll only use the FIRST one for this page run,
         // or loop if it's the same page.
         if (config.stadiu_filter && config.stadiu_filter.length > 0) {
-            // We'll just apply the first one for now as per user feedback that it doesn't support 2.
-            await applySelectizeFilter('select#status', [config.stadiu_filter[0]], true);
+            // Updated selector to match live site ID: filter-status-eq
+            await applySelectizeFilter('select#filter-status-eq', [config.stadiu_filter[0]], true);
         }
 
         // Region / Oras / Zona
