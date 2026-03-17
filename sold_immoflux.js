@@ -372,17 +372,17 @@ async function runSoldImmofluxScrape(req, res) {
             if (await isJobStopped()) break;
 
             if (activeSupabase) {
-                // Check if this property is already in Market Insights
-                const { data: alreadyInInsights } = await activeSupabase
-                    .from('market_insights')
+                // Check if this property is already scraped
+                const { data: alreadyScraped } = await activeSupabase
+                    .from('scraped_urls')
                     .select('id')
-                    .eq('original_url', url)
+                    .eq('url', url)
                     .maybeSingle();
 
-                if (alreadyInInsights) {
+                if (alreadyScraped) {
                     totalSkipped++;
                     if (mode === 'watcher') {
-                        await logLive('Watcher mode found existing Market Insight. Aborting batch.');
+                        await logLive('Watcher mode found existing scraped property. Aborting batch.');
                         break;
                     }
                     continue;
@@ -504,7 +504,15 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Description
-                    result['days_on_market'] = findValue('Zile in piata') || findValue('Zile pe piata') || findValue('Zile in piață') || findValue('Zile pe piață');
+                    const fullText = root.textContent || '';
+                    const domMatch = fullText.match(/Zile(?: in | pe | )pia[tț][aă][:\s]+(\d+)/i);
+                    
+                    if (domMatch && domMatch[1]) {
+                        result['days_on_market'] = domMatch[1];
+                    } else {
+                        result['days_on_market'] = findValue('Zile in piata') || findValue('Zile pe piata') || findValue('Zile in piață') || findValue('Zile pe piață');
+                    }
+                    
                     result['description'] = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
 
                     // Extract all images
