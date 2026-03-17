@@ -113,21 +113,30 @@ async function runSoldImmofluxScrape(req, res) {
         // Apply Filters via UI
         await logLive('Opening filter wrapper...');
         // Open filter panel if not open
+        await logLive('Checking filter panel state...');
         try {
-            const filterBtn = 'a[href="#filter-wrapper"], a[data-type="filterbutton"]';
-            await page.waitForSelector(filterBtn, { timeout: 5000 });
             const filterWrapper = page.locator('#filter-wrapper');
-            // If the wrapper is not visible, it's likely collapsed.
-            // Note: isVisible() might return true if it's display:block but height 0.
-            // Using a more reliable check: check if the height is > 10px.
-            const box = await filterWrapper.boundingBox();
-            if (!box || box.height < 10) {
-                await logLive('Opening filter panel...');
-                await page.click('a[href="#filter-wrapper"]');
-                await page.waitForTimeout(2000); // Give it time to expand
+            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter').first();
+            
+            let isOpen = false;
+            // Try up to 3 times to ensure it's open
+            for (let i = 0; i < 3; i++) {
+                const box = await filterWrapper.boundingBox();
+                if (box && box.height > 10) {
+                    isOpen = true;
+                    await logLive('Filter panel confirmed open.');
+                    break;
+                }
+                await logLive(`Clicking filter toggle (attempt ${i+1})...`);
+                await filterBtn.click({ force: true });
+                await page.waitForTimeout(2000); // Wait for transition
+            }
+            
+            if (!isOpen) {
+                await logLive('Warning: Header filter panel visibility check failed, attempting to proceed anyway...', 'warn');
             }
         } catch(e) {
-            await logLive(`Notice: Problem opening filter panel or it was already open: ${e.message}`, 'info');
+            await logLive(`Notice: Problem toggling filter panel: ${e.message}`, 'info');
         }
 
         const applySelectizeFilter = async (selectorOrLabel, values, isId = false) => {
@@ -141,8 +150,7 @@ async function runSoldImmofluxScrape(req, res) {
                     let controlSelector;
                     if (isId) {
                         // More robust selector for Selectize after a specific select
-                        // Using adjacent or general sibling
-                        controlSelector = `${selectorOrLabel} + .selectize-control .selectize-input, ${selectorOrLabel} ~ .selectize-control .selectize-input`;
+                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input`;
                     } else {
                         // Fallback to label search
                         controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
@@ -154,6 +162,9 @@ async function runSoldImmofluxScrape(req, res) {
 
                     const inputLoc = isId ? page.locator(controlSelector).first() : page.locator(`xpath=${controlSelector}`).first();
                     
+                    // Force it to be visible by scrolling if needed
+                    await inputLoc.scrollIntoViewIfNeeded();
+
                     if (await inputLoc.count() === 0 && !isId) {
                         // Try another label variant if first fails
                         await logLive(`Label [${selectorOrLabel}] not found, trying with comma variant...`);
@@ -165,18 +176,18 @@ async function runSoldImmofluxScrape(req, res) {
                             throw new Error(`Control for ${selectorOrLabel} not found`);
                         }
                     } else {
-                        // Wait for it and click it
-                        await inputLoc.waitFor({ state: 'visible', timeout: 10000 });
-                        await inputLoc.click();
+                        // Check visibility but don't strictly wait if it's there
+                        await inputLoc.click({ force: true });
                     }
 
                     await page.waitForTimeout(500);
                     
-                    // Clear existing if any (Backspaces)
-                    for(let i=0; i<20; i++) await page.keyboard.press('Backspace');
+                    // Clear existing if any (programmatically for selectize)
+                    await page.keyboard.press('Control+A');
+                    await page.keyboard.press('Backspace');
                     
-                    await page.keyboard.type(val, { delay: 100 });
-                    await page.waitForTimeout(1500); // Wait for dropdown results
+                    await page.keyboard.type(val, { delay: 150 });
+                    await page.waitForTimeout(2000); // Wait longer for dropdown results
                     
                     // Listen for filter response
                     const filterResponsePromise = page.waitForResponse(r => 
