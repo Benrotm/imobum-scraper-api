@@ -89,11 +89,29 @@ async function runSoldImmofluxScrape(req, res) {
         await page.locator('input[name="email"], #inputEmail').fill(immofluxUser);
         await page.locator('input[name="password"], #inputPassword').fill(immofluxPass);
         
+        // Try to click "Remember me" if it exists
+        try {
+            const rememberMe = page.locator('input[type="checkbox"], #inputCheckbox').first();
+            if (await rememberMe.count() > 0) {
+                await rememberMe.check({ force: true });
+                await logLive('Checked [Remember me].');
+            }
+        } catch(e) {}
+
+        await logLive('Submitting login form...');
         await Promise.all([
-            page.waitForNavigation({ waitUntil: 'networkidle' }),
-            page.locator('button[type="submit"]').click()
+            page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }),
+            page.locator('button[type="submit"], input[type="submit"]').first().click()
         ]);
-        await logLive('Login successful.');
+        
+        // VERIFY LOGIN
+        const loggedInMarker = page.locator('.user-menu, a[href*="logout"], .ti-user, div.member-card');
+        try {
+            await loggedInMarker.first().waitFor({ state: 'attached', timeout: 15000 });
+            await logLive(`Login verified. Welcome, ${await page.locator('.user-display-name, .member-name').first().innerText().catch(() => 'User')}`);
+        } catch(e) {
+            await logLive('Warning: Logged-in marker not found, but proceeding to properties navigation anyway...', 'warn');
+        }
 
         if (await isJobStopped()) {
             await logLive('Job was stopped. Aborting.', 'warn');
