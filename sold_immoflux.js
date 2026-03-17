@@ -112,13 +112,21 @@ async function runSoldImmofluxScrape(req, res) {
 
         // Apply Filters via UI
         await logLive('Opening filter wrapper...');
-        const filterBtn = 'a[href="#filter-wrapper"], a.btn-icon.btn-primary.btn-outline[href="#filter-wrapper"]';
+        // Open filter panel if not open
         try {
-            await page.waitForSelector(filterBtn, { timeout: 10000 });
-            await page.click(filterBtn);
-            await page.waitForTimeout(1000);
+            await page.waitForSelector('a[href="#filter-wrapper"]', { timeout: 5000 });
+            const filterWrapper = page.locator('#filter-wrapper');
+            // If the wrapper is not visible, it's likely collapsed.
+            // Note: isVisible() might return true if it's display:block but height 0.
+            // Using a more reliable check: check if the height is > 10px.
+            const box = await filterWrapper.boundingBox();
+            if (!box || box.height < 10) {
+                await logLive('Opening filter panel...');
+                await page.click('a[href="#filter-wrapper"]');
+                await page.waitForTimeout(2000); // Give it time to expand
+            }
         } catch(e) {
-            await logLive('Filter wrapper already open or not found.', 'info');
+            await logLive(`Notice: Problem opening filter panel or it was already open: ${e.message}`, 'info');
         }
 
         const applySelectizeFilter = async (selectorOrLabel, values, isId = false) => {
@@ -131,13 +139,18 @@ async function runSoldImmofluxScrape(req, res) {
                 try {
                     let controlSelector;
                     if (isId) {
-                        controlSelector = `${selectorOrLabel} + .selectize-control .selectize-input`;
+                        // More robust selector for Selectize after a specific select
+                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input`;
                     } else {
                         // Fallback to label search
                         controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
+                        // Or if directly in a div.col
+                        if (await page.locator(`xpath=${controlSelector}`).count() === 0) {
+                            controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/parent::div//div[contains(@class, "selectize-input")]`;
+                        }
                     }
 
-                    const inputLoc = isId ? page.locator(controlSelector) : page.locator(`xpath=${controlSelector}`);
+                    const inputLoc = isId ? page.locator(controlSelector).first() : page.locator(`xpath=${controlSelector}`).first();
                     
                     if (await inputLoc.count() === 0 && !isId) {
                         // Try another label variant if first fails
@@ -150,6 +163,8 @@ async function runSoldImmofluxScrape(req, res) {
                             throw new Error(`Control for ${selectorOrLabel} not found`);
                         }
                     } else {
+                        // Wait for it and click it
+                        await inputLoc.waitFor({ state: 'visible', timeout: 10000 });
                         await inputLoc.click();
                     }
 
