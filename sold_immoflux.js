@@ -86,18 +86,24 @@ async function runSoldImmofluxScrape(req, res) {
             if (await cookieBtn.isVisible({ timeout: 2000 })) await cookieBtn.click();
         } catch (e) { }
 
-        await page.locator('input[name="email"], #inputEmail').fill(immofluxUser);
-        await page.locator('input[name="password"], #inputPassword').fill(immofluxPass);
-        
-        // Try to click "Remember me" if it exists
-        // REMOVED 'Remember Me' check here as it caused 'Datele de identificare nu pot fi confirmate'
-        // on blitz.immoflux.ro
-
-        await logLive('Submitting login form...');
-        await Promise.all([
-            page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => null),
-            page.locator('button[type="submit"], input[type="submit"]').first().click()
-        ]);
+        await logLive(`Typing credentials for ${immofluxUser}...`, 'info');
+        try {
+            await page.waitForSelector('#inputEmail', { timeout: 10000 });
+            await page.locator('#inputEmail').fill('');
+            await page.locator('#inputEmail').pressSequentially(immofluxUser, { delay: 50 });
+            
+            await page.locator('#inputPassword').fill('');
+            await page.locator('#inputPassword').pressSequentially(immofluxPass, { delay: 50 });
+            
+            await logLive('Submitting login form...');
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => null),
+                page.locator('button[type="submit"]').click()
+            ]);
+        } catch(authErr) {
+            await logLive(`Login input failed: ${authErr.message}`, 'error');
+            throw authErr;
+        }
         
         // Check for login errors
         const errorAlert = page.locator('.alert-danger, .error-message, .help-block-error');
