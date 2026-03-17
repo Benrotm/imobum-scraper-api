@@ -116,7 +116,8 @@ async function runSoldImmofluxScrape(req, res) {
         await logLive('Checking filter panel state...');
         try {
             const filterWrapper = page.locator('#filter-wrapper');
-            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter').first();
+            // Look for any reasonable filter toggle button
+            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter, i.ti-filter').first();
             
             let isOpen = false;
             // Try up to 3 times to ensure it's open
@@ -133,7 +134,7 @@ async function runSoldImmofluxScrape(req, res) {
             }
             
             if (!isOpen) {
-                await logLive('Warning: Header filter panel visibility check failed, attempting to proceed anyway...', 'warn');
+                await logLive('Warning: Filter panel height check failed, but proceeding...', 'warn');
             }
         } catch(e) {
             await logLive(`Notice: Problem toggling filter panel: ${e.message}`, 'info');
@@ -149,8 +150,8 @@ async function runSoldImmofluxScrape(req, res) {
                 try {
                     let controlSelector;
                     if (isId) {
-                        // More robust selector for Selectize after a specific select
-                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input`;
+                        // More robust selector for Selectize: target both possible patterns
+                        controlSelector = `${selectorOrLabel} ~ .selectize-control .selectize-input, ${selectorOrLabel} + .selectize-control .selectize-input`;
                     } else {
                         // Fallback to label search
                         controlSelector = `//label[contains(text(), "${selectorOrLabel}")]/following-sibling::div//div[contains(@class, "selectize-input")]`;
@@ -213,11 +214,19 @@ async function runSoldImmofluxScrape(req, res) {
         };
 
         // Stadiu filter - The site allows only ONE stadiu at a time.
-        // If user provided multiple, we'll only use the FIRST one for this page run,
-        // or loop if it's the same page.
+        // If user provided multiple, we'll only use the FIRST one for this page run.
         if (config.stadiu_filter && config.stadiu_filter.length > 0) {
-            // Updated selector to match live site ID: filter-status-eq
-            await applySelectizeFilter('select#filter-status-eq', [config.stadiu_filter[0]], true);
+            // Try both 'select#status' (blitz timely) and 'select#filter-status-eq' (older immoflux)
+            try {
+                if (await page.locator('select#status').count() > 0) {
+                    await applySelectizeFilter('select#status', [config.stadiu_filter[0]], true);
+                } else {
+                    await applySelectizeFilter('select#filter-status-eq', [config.stadiu_filter[0]], true);
+                }
+            } catch(e) {
+                await logLive(`Notice: Failed to set Stadiu filter with ID selectors: ${e.message}. Trying literal label "Stadiu"...`, 'info');
+                await applySelectizeFilter('Stadiu', [config.stadiu_filter[0]], false);
+            }
         }
 
         // Region / Oras / Zona
