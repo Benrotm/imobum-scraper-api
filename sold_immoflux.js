@@ -504,6 +504,7 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Description
+                    result['days_on_market'] = findValue('Zile in piata') || findValue('Zile pe piata') || findValue('Zile in piață') || findValue('Zile pe piață');
                     result['description'] = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
 
                     // Extract all images
