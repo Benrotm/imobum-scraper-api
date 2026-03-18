@@ -477,11 +477,15 @@ async function runSoldImmofluxScrape(req, res) {
                     };
 
                     result['rooms'] = findFeature('Camere');
+                    result['bedrooms'] = findFeature('Dormitoare');
+                    result['bathrooms'] = findFeature('Bai');
                     result['usable_area'] = findFeature('Suprafata utila') || findFeature('Suprafata utilă') || findFeature('Suprafata');
                     result['land_area'] = findFeature('Suprafata teren');
                     result['year_built'] = findFeature('An constructie') || findFeature('Anul');
+                    result['comfort'] = findValue('Confort');
+                    result['floor'] = findValue('Etaj');
 
-                    result['price'] = findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
+                    result['price'] = findFeature('Pret tranzactionare') || findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
                     
                     if (!result['price'] || result['price'] === '0' || result['price'] === '') {
                         const priceSpan = root.querySelector('span.blue-600');
@@ -614,6 +618,10 @@ async function runSoldImmofluxScrape(req, res) {
                                 priceRaw: cleanPrice,
                                 description: data.description,
                                 rooms: parseInt(data.rooms) || 0,
+                                bedrooms: parseInt(data.bedrooms) || 0,
+                                bathrooms: parseInt(data.bathrooms) || 0,
+                                comfort: data.comfort,
+                                floor: data.floor,
                                 usable_area: parseFloat(data.usable_area?.replace(',', '.')) || 0,
                                 year_built: parseInt(data.year_built) || 0,
                                 city: data.city,
