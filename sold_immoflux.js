@@ -414,7 +414,7 @@ async function runSoldImmofluxScrape(req, res) {
                     
                     // 1. Root container (Slide Panel or Full Page)
                     const panel = document.querySelector('.slidePanel');
-                    const root = panel || document;
+                    const root = panel || document.body; // CRITICAL FIX: Use document.body instead of document so textContent actually works
 
                     // Title extraction - Improved
                     const h1Title = root.querySelector('h1')?.textContent || '';
