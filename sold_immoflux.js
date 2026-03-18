@@ -506,6 +506,14 @@ async function runSoldImmofluxScrape(req, res) {
                         result['floor'] = findValue('Etaj') || findFeature('Etaj');
                     }
 
+                    // Total Floors extraction
+                    const totalFloorsMatch = fullText.match(/Regim\s+inaltime\s*:\s*([A-Za-z0-9+ ]+)/i) || fullText.match(/Regim\s+înălțime\s*:\s*([A-Za-z0-9+ ]+)/i);
+                    if (totalFloorsMatch && totalFloorsMatch[1]) {
+                        const tfv = totalFloorsMatch[1].trim();
+                        const numMatch = tfv.match(/(\d+)$/);
+                        if (numMatch) result['total_floors'] = numMatch[1];
+                    }
+
                     // Direct extraction for Prices
                     const soldPriceMatch = fullText.match(/Pret\s+tranzactionare\s*:\s*([\d.]+)/i) || fullText.match(/Preț\s+tranzacționare\s*:\s*([\d.]+)/i);
                     if (soldPriceMatch) {
@@ -654,6 +662,7 @@ async function runSoldImmofluxScrape(req, res) {
                                 bathrooms: parseInt(data.bathrooms) || 0,
                                 comfort: data.comfort,
                                 floor: data.floor,
+                                total_floors: data.total_floors,
                                 usable_area: parseFloat(data.usable_area?.replace(',', '.')) || 0,
                                 year_built: parseInt(data.year_built) || 0,
                                 city: data.city,
