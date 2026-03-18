@@ -507,7 +507,7 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Total Floors extraction
-                    const totalFloorsMatch = fullText.match(/Regim\s+inaltime\s*:\s*([A-Za-z0-9+ ]+)/i) || fullText.match(/Regim\s+înălțime\s*:\s*([A-Za-z0-9+ ]+)/i);
+                    const totalFloorsMatch = fullText.match(/Regim\s+inaltime\s*[:\s-]*\s*([A-Za-z0-9+ ]+)/i) || fullText.match(/Regim\s+înălțime\s*[:\s-]*\s*([A-Za-z0-9+ ]+)/i);
                     if (totalFloorsMatch && totalFloorsMatch[1]) {
                         const tfv = totalFloorsMatch[1].trim();
                         const numMatch = tfv.match(/(\d+)$/);
