@@ -521,12 +521,20 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Robust Description extraction mimicking index.js logic
-                    const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
+                    // We look for "Descriere" and stop at common footer headers. 
+                    // We use negative lookahead for "cheie" to avoid cutting off "Caracteristici cheie"
+                    const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+?)(?:\r?\n\s*(?:(?:CARACTERISTICI(?! cheie)|Detalii suplimentare|Dotari|Zona|Memo privat|Comentarii|Documente|Istoric|Activitate|Similare))|$)/i);
                     let finalDesc = '';
                     if (descMatch && descMatch[1]) {
                         finalDesc = descMatch[1].trim();
                     } else {
-                        finalDesc = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
+                        // Fallback to simpler regex if structured one fails
+                        const simplerMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+?)(?:\s+Memo privat|\s+Comentarii|\s+Documente|$)/i);
+                        if (simplerMatch && simplerMatch[1]) {
+                            finalDesc = simplerMatch[1].trim();
+                        } else {
+                            finalDesc = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
+                        }
                     }
                     
                     // Filter Descriere keyword
