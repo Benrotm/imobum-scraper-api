@@ -176,7 +176,7 @@ async function runSoldImmofluxScrape(req, res) {
             
             const filterWrapper = page.locator(wrapperSelector).first();
             // Look for any reasonable filter toggle button
-            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter, i.ti-filter, .btn-primary.btn-outline.btn-round i.ti-filter').first();
+            const filterBtn = page.locator('a[href="#filter-wrapper"], a[data-type="filterbutton"], .ti-filter, i.ti-filter, .btn-primary.btn-outline.btn-round i.ti-filter, button.filter-group-header').first();
             
             let isOpen = false;
             // Try up to 4 times to ensure it's open
