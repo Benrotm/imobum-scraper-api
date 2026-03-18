@@ -513,6 +513,12 @@ async function runSoldImmofluxScrape(req, res) {
                         result['days_on_market'] = findValue('Zile in piata') || findValue('Zile pe piata') || findValue('Zile in piață') || findValue('Zile pe piață');
                     }
                     
+                    // Extract Adresa
+                    const addressMatch = fullText.match(/Adresa(?:\s*imobil)?\s*:\s*(.+)/i) || fullText.match(/Adresa\s*:?\s*(.+)/i);
+                    if (addressMatch && addressMatch[1]) {
+                        result['address'] = addressMatch[1].trim();
+                    }
+
                     // Robust Description extraction mimicking index.js logic
                     const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
                     let finalDesc = '';
@@ -595,6 +601,11 @@ async function runSoldImmofluxScrape(req, res) {
                                 year_built: parseInt(data.year_built) || 0,
                                 city: data.city,
                                 area: data.area,
+                                address: data.address,
+                                property_type: data.property_type,
+                                owner_name: data.owner_name,
+                                owner_phone: data.owner_phone,
+                                private_notes: data.private_notes,
                                 days_on_market: data.days_on_market || null,
                                 status: 'Sold'
                             }
