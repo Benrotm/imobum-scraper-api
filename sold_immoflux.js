@@ -483,6 +483,8 @@ async function runSoldImmofluxScrape(req, res) {
                         return null;
                     };
 
+                    const fullText = root.textContent || '';
+
                     result['rooms'] = findFeature('Camere');
                     result['bedrooms'] = findFeature('Dormitoare');
                     result['bathrooms'] = findFeature('Bai');
@@ -535,7 +537,6 @@ async function runSoldImmofluxScrape(req, res) {
                     }
 
                     // Description
-                    const fullText = root.textContent || '';
                     const domMatch = fullText.match(/Zile(?: in | pe | )pia[tț][aă][:\s]+(\d+)/i);
                     
                     if (domMatch && domMatch[1]) {
