@@ -513,7 +513,46 @@ async function runSoldImmofluxScrape(req, res) {
                         result['days_on_market'] = findValue('Zile in piata') || findValue('Zile pe piata') || findValue('Zile in piață') || findValue('Zile pe piață');
                     }
                     
-                    result['description'] = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
+                    // Robust Description extraction mimicking index.js logic
+                    const descMatch = fullText.match(/Descriere\s*:?\s*([\s\S]+?)(?:\s+Detalii suplimentare|\s+Caracteristici|\s+Dotari|\s*Zona|$)/i);
+                    let finalDesc = '';
+                    if (descMatch && descMatch[1]) {
+                        finalDesc = descMatch[1].trim();
+                    } else {
+                        finalDesc = getText(root.querySelector('.description, #description, .details-desc, .property-description, #notes'));
+                    }
+                    
+                    // Filter Descriere keyword
+                    finalDesc = finalDesc.replace(/^\s*Descriere\s*/i, '').trim();
+                    result['description'] = finalDesc;
+
+                    // Property Type and Category extraction
+                    // Search for standard romanian types in the title or DOM
+                    const tLower = (bestTitle + ' ' + fullText).toLowerCase();
+                    if (tLower.includes('casa') || tLower.includes('vila')) {
+                        result['property_type'] = 'House/Villa';
+                    } else if (tLower.includes('teren')) {
+                        result['property_type'] = 'Land';
+                    } else if (tLower.includes('spatiu comercial') || tLower.includes('hala') || tLower.includes('birou') || tLower.includes('cladire')) {
+                        result['property_type'] = 'Commercial';
+                    } else if (tLower.includes('apartament') || tLower.includes('garsoniera')) {
+                        result['property_type'] = 'Apartment';
+                    }
+
+                    // Extract Agent Info for the Private Information panel
+                    const phoneMatch = fullText.match(/Telefon\s*:?\s*([+]*[\s\d]{8,20})/i);
+                    if (phoneMatch && phoneMatch[1]) {
+                        const cleanedPhone = phoneMatch[1].trim().replace(/\s/g, '');
+                        if (cleanedPhone.length >= 10) result['owner_phone'] = cleanedPhone;
+                    }
+
+                    // Owner Name extraction (usually near phone)
+                    const agentNameMatch = fullText.match(/Agent(?:\s*imobiliar)?\s*(?:[:|-]?)\s*([A-Za-zĂăÂâÎîȘșȚț\s]{3,30})/i);
+                    if (agentNameMatch && agentNameMatch[1] && !agentNameMatch[1].toLowerCase().includes('telefon')) {
+                        result['owner_name'] = agentNameMatch[1].trim();
+                    }
+
+                    result['private_notes'] = `Agent name: ${result['owner_name'] || 'Unknown'} | Extracted implicitly by Scraper API.`;
 
                     // Extract all images
                     const imgs = Array.from(root.querySelectorAll('img'))
