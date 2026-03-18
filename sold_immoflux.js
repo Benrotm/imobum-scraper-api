@@ -477,7 +477,8 @@ async function runSoldImmofluxScrape(req, res) {
                     };
 
                     result['rooms'] = findFeature('Camere');
-                    result['usable_area'] = findFeature('Suprafata utila') || findFeature('Suprafata utilă') || findFeature('Suprafata teren') || findFeature('Suprafata');
+                    result['usable_area'] = findFeature('Suprafata utila') || findFeature('Suprafata utilă') || findFeature('Suprafata');
+                    result['land_area'] = findFeature('Suprafata teren');
                     result['year_built'] = findFeature('An constructie') || findFeature('Anul');
 
                     result['price'] = findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
@@ -606,6 +607,7 @@ async function runSoldImmofluxScrape(req, res) {
                                 owner_name: data.owner_name,
                                 owner_phone: data.owner_phone,
                                 private_notes: data.private_notes,
+                                land_area: parseFloat(data.land_area?.replace(',', '.')) || 0,
                                 days_on_market: data.days_on_market || null,
                                 status: 'Sold'
                             }
