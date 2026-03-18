@@ -440,11 +440,18 @@ async function runSoldImmofluxScrape(req, res) {
                             const t = getText(l);
                             const lowerT = t.toLowerCase();
                             const lowerMatch = textMatch.toLowerCase();
-                            return lowerT === lowerMatch || lowerT === (lowerMatch + ':');
+                            // Match exact label or label: or even "Label: Value"
+                            return lowerT === lowerMatch || lowerT === (lowerMatch + ':') || lowerT.startsWith(lowerMatch + ':');
                         });
                         
                         if (!labelEl) return null;
                         
+                        const fullLine = getText(labelEl);
+                        if (fullLine.includes(':')) {
+                            const parts = fullLine.split(':');
+                            if (parts[1] && parts[1].trim().length > 0) return parts[1].trim();
+                        }
+
                         const parent = labelEl.parentElement;
                         if (parent) {
                             const strong = parent.querySelector('strong');
@@ -482,10 +489,18 @@ async function runSoldImmofluxScrape(req, res) {
                     result['usable_area'] = findFeature('Suprafata utila') || findFeature('Suprafata utilă') || findFeature('Suprafata');
                     result['land_area'] = findFeature('Suprafata teren');
                     result['year_built'] = findFeature('An constructie') || findFeature('Anul');
-                    result['comfort'] = findValue('Confort');
-                    result['floor'] = findValue('Etaj');
+                    result['comfort'] = findValue('Confort') || findFeature('Confort');
+                    
+                    let floorVal = findValue('Etaj') || findFeature('Etaj');
+                    if (floorVal && floorVal.toLowerCase().includes('parter')) {
+                        result['floor'] = '0';
+                    } else {
+                        result['floor'] = floorVal;
+                    }
 
-                    result['price'] = findFeature('Pret tranzactionare') || findValue('Pret tranzactionare') || findValue('Pret') || findValue('Preț final');
+                    result['listing_price'] = findValue('Pret') || findFeature('Pret');
+                    result['sold_price'] = findFeature('Pret tranzactionare') || findValue('Pret tranzactionare');
+                    result['price'] = result['sold_price'] || result['listing_price'] || findValue('Preț final');
                     
                     if (!result['price'] || result['price'] === '0' || result['price'] === '') {
                         const priceSpan = root.querySelector('span.blue-600');
@@ -594,13 +609,17 @@ async function runSoldImmofluxScrape(req, res) {
                 if (popupData && popupData.data) {
                     const { data, images: imgList } = popupData;
                     
-                    // Clean Price - handle cases like "178.000€ (2.373€/mp)"
-                    let cleanPrice = 0;
-                    if (data.price) {
-                        // Take everything before the first '('
-                        const mainPart = data.price.split('(')[0];
-                        const pMatch = mainPart.replace(/[^\d]/g, '');
-                        cleanPrice = parseInt(pMatch) || 0;
+                    // Clean Prices
+                    let cleanListingPrice = 0;
+                    if (data.listing_price) {
+                        const pMatch = data.listing_price.split('(')[0].replace(/[^\d]/g, '');
+                        cleanListingPrice = parseInt(pMatch) || 0;
+                    }
+
+                    let cleanSoldPrice = 0;
+                    if (data.sold_price) {
+                        const pMatch = data.sold_price.split('(')[0].replace(/[^\d]/g, '');
+                        cleanSoldPrice = parseInt(pMatch) || 0;
                     }
 
                     // Transmit to NextJS webhook
@@ -615,7 +634,8 @@ async function runSoldImmofluxScrape(req, res) {
                                 raw_extracted_data: data,
                                 images: imgList,
                                 title: data.title || `Proprietate - ${referenceId}`,
-                                priceRaw: cleanPrice,
+                                listingPriceRaw: cleanListingPrice,
+                                soldPriceRaw: cleanSoldPrice || cleanListingPrice, // Fallback to listing if sold price not found
                                 description: data.description,
                                 rooms: parseInt(data.rooms) || 0,
                                 bedrooms: parseInt(data.bedrooms) || 0,
