@@ -328,7 +328,43 @@ async function runSoldImmofluxScrape(req, res) {
             await applySelectizeFilter('select#select-city-zones', [config.zone_filter], true);
         }
 
-        await logLive(`Filters processed. Extracting listings on Page ${pageNum}...`);
+        await logLive(`Filters processed. Navigating to Page ${pageNum || 1}...`);
+        
+        // Explicitly handle pagination if pageNum > 1
+        if (pageNum && parseInt(pageNum) > 1) {
+            const targetPage = parseInt(pageNum);
+            await logLive(`Explicitly clicking pagination for Page ${targetPage}...`);
+            try {
+                // Try several common pagination selectors
+                const paginationSelectors = [
+                    `ul.pagination li a:text("${targetPage}")`,
+                    `.pagination a:text("${targetPage}")`,
+                    `a.page-link:text("${targetPage}")`,
+                    `//ul[contains(@class, "pagination")]//a[text()="${targetPage}"]`
+                ];
+                
+                let clicked = false;
+                for (const sel of paginationSelectors) {
+                    const loc = sel.startsWith('//') ? page.locator(`xpath=${sel}`) : page.locator(sel);
+                    if (await loc.count() > 0) {
+                        await logLive(`Clicking page ${targetPage} using selector: ${sel}`);
+                        await loc.first().click({ force: true });
+                        clicked = true;
+                        break;
+                    }
+                }
+                
+                if (clicked) {
+                    // Wait for the AJAX refresh again
+                    await page.waitForTimeout(3000);
+                    await logLive(`Pagination click successful. Waiting for results...`);
+                } else {
+                    await logLive(`Warning: Could not find pagination button for page ${targetPage}. Staying on current page.`, 'warn');
+                }
+            } catch (pageErr) {
+                await logLive(`Error during explicit pagination: ${pageErr.message}`, 'error');
+            }
+        }
         
         // Wait for results to appear
         try {
