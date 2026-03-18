@@ -491,15 +491,26 @@ async function runSoldImmofluxScrape(req, res) {
                     result['year_built'] = findFeature('An constructie') || findFeature('Anul');
                     result['comfort'] = findValue('Confort') || findFeature('Confort');
                     
-                    let floorVal = findValue('Etaj') || findFeature('Etaj');
-                    if (floorVal && floorVal.toLowerCase().includes('parter')) {
-                        result['floor'] = '0';
+                    // Direct extraction for Floor with Parter support
+                    const floorMatch = fullText.match(/Etaj\s*:\s*([A-Za-z0-9 ]+)/i);
+                    if (floorMatch && floorMatch[1]) {
+                        const fv = floorMatch[1].trim().toLowerCase();
+                        if (fv.includes('parter')) result['floor'] = '0';
+                        else {
+                            const numMatch = fv.match(/(\d+)/);
+                            if (numMatch) result['floor'] = numMatch[1];
+                        }
                     } else {
-                        result['floor'] = floorVal;
+                        result['floor'] = findValue('Etaj') || findFeature('Etaj');
                     }
 
+                    // Direct extraction for Prices
+                    const soldPriceMatch = fullText.match(/Pret\s+tranzactionare\s*:\s*([\d.]+)/i) || fullText.match(/Preț\s+tranzacționare\s*:\s*([\d.]+)/i);
+                    if (soldPriceMatch) {
+                        result['sold_price'] = soldPriceMatch[1];
+                    }
+                    
                     result['listing_price'] = findValue('Pret') || findFeature('Pret');
-                    result['sold_price'] = findFeature('Pret tranzactionare') || findValue('Pret tranzactionare');
                     result['price'] = result['sold_price'] || result['listing_price'] || findValue('Preț final');
                     
                     if (!result['price'] || result['price'] === '0' || result['price'] === '') {
