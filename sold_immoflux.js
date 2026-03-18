@@ -541,17 +541,25 @@ async function runSoldImmofluxScrape(req, res) {
                     finalDesc = finalDesc.replace(/^\s*Descriere\s*/i, '').trim();
                     result['description'] = finalDesc;
 
-                    // Property Type and Category extraction
-                    // Search for standard romanian types in the title or DOM
-                    const tLower = (bestTitle + ' ' + fullText).toLowerCase();
-                    if (tLower.includes('casa') || tLower.includes('vila')) {
-                        result['property_type'] = 'House/Villa';
-                    } else if (tLower.includes('teren')) {
-                        result['property_type'] = 'Land';
-                    } else if (tLower.includes('spatiu comercial') || tLower.includes('hala') || tLower.includes('birou') || tLower.includes('cladire')) {
-                        result['property_type'] = 'Commercial';
-                    } else if (tLower.includes('apartament') || tLower.includes('garsoniera')) {
+                    // Property Type and Category extraction - IMPROVED PRIORITY
+                    const rawType = (findValue('Tip') || '').toLowerCase();
+                    const tLower = (bestTitle).toLowerCase();
+                    const fullLower = (bestTitle + ' ' + fullText).toLowerCase();
+                    
+                    if (rawType.includes('apartament') || rawType.includes('garsoniera') || tLower.includes('apartament') || tLower.includes('garsoniera')) {
                         result['property_type'] = 'Apartment';
+                    } else if (rawType.includes('casa') || rawType.includes('vila') || tLower.includes('casa') || tLower.includes('vila')) {
+                        result['property_type'] = 'House/Villa';
+                    } else if (rawType.includes('teren') || tLower.includes('teren')) {
+                        result['property_type'] = 'Land';
+                    } else if (rawType.includes('spatiu') || rawType.includes('birou') || rawType.includes('hala') || tLower.includes('spatiu') || tLower.includes('comercial')) {
+                        result['property_type'] = 'Commercial';
+                    } else {
+                        // Fallback to searching the whole text if not found in specific areas
+                        if (fullLower.includes('apartament')) result['property_type'] = 'Apartment';
+                        else if (fullLower.includes('casa') || fullLower.includes('vila')) result['property_type'] = 'House/Villa';
+                        else if (fullLower.includes('teren')) result['property_type'] = 'Land';
+                        else if (fullLower.includes('spatiu comercial')) result['property_type'] = 'Commercial';
                     }
 
                     // Extract Agent Info for the Private Information panel
