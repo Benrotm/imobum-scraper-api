@@ -333,34 +333,59 @@ async function runSoldImmofluxScrape(req, res) {
         // Explicitly handle pagination if pageNum > 1
         if (pageNum && parseInt(pageNum) > 1) {
             const targetPage = parseInt(pageNum);
-            await logLive(`Explicitly clicking pagination for Page ${targetPage}...`);
+            await logLive(`Explicitly navigating to Page ${targetPage}...`);
             try {
-                // Try several common pagination selectors
-                const paginationSelectors = [
-                    `ul.pagination li a:text("${targetPage}")`,
-                    `.pagination a:text("${targetPage}")`,
-                    `a.page-link:text("${targetPage}")`,
-                    `//ul[contains(@class, "pagination")]//a[text()="${targetPage}"]`
-                ];
-                
-                let clicked = false;
-                for (const sel of paginationSelectors) {
-                    const loc = sel.startsWith('//') ? page.locator(`xpath=${sel}`) : page.locator(sel);
-                    if (await loc.count() > 0) {
-                        await logLive(`Clicking page ${targetPage} using selector: ${sel}`);
-                        await loc.first().click({ force: true });
-                        clicked = true;
+                let currentMaxVisible = 1;
+                let attempts = 0;
+                const maxAttempts = 10; // Safety break
+
+                while (attempts < maxAttempts) {
+                    attempts++;
+                    
+                    // Check if target page is visible
+                    const targetLink = page.locator(`ul.pagination li a, .pagination a, a.page-link`).filter({ hasText: new RegExp(`^${targetPage}$`) });
+                    if (await targetLink.count() > 0) {
+                        await logLive(`Target page ${targetPage} found. Clicking...`);
+                        await targetLink.first().click({ force: true });
+                        await page.waitForTimeout(3000);
+                        break; // Success!
+                    }
+
+                    // Not found, find the best step forward
+                    const nextArrow = page.locator('a:text("»"), a:text(">"), li.next a, a i.fa-angle-right, a i.fa-angle-double-right');
+                    
+                    // Also find highest visible number
+                    const pageNumbers = await page.evaluate(() => {
+                        return Array.from(document.querySelectorAll('ul.pagination li a, .pagination a'))
+                            .map(a => parseInt(a.textContent.trim()))
+                            .filter(n => !isNaN(n))
+                            .sort((a, b) => b - a);
+                    });
+
+                    const highestVisible = pageNumbers[0] || 1;
+                    
+                    if (highestVisible >= targetPage) {
+                        // It should have been visible in the locator skip... maybe selector mismatch
+                        await logLive(`Detected highest visible ${highestVisible} is >= target ${targetPage}, but link not found. Retrying...`, 'warn');
+                    }
+
+                    if (await nextArrow.count() > 0) {
+                        await logLive(`Target page ${targetPage} not visible. Clicking "Next" arrow...`);
+                        await nextArrow.first().click({ force: true });
+                    } else if (highestVisible > currentMaxVisible) {
+                        await logLive(`Target page ${targetPage} not visible. Clicking highest page ${highestVisible}...`);
+                        await page.locator(`ul.pagination li a, .pagination a`).filter({ hasText: new RegExp(`^${highestVisible}$`) }).first().click({ force: true });
+                        currentMaxVisible = highestVisible;
+                    } else {
+                        await logLive(`Stuck! Cannot find target page ${targetPage} or any way forward.`, 'error');
                         break;
                     }
+                    
+                    await page.waitForTimeout(3000);
+                    await logLive(`List refreshed. Re-checking for Page ${targetPage}...`);
                 }
                 
-                if (clicked) {
-                    // Wait for the AJAX refresh again
-                    await page.waitForTimeout(3000);
-                    await logLive(`Pagination click successful. Waiting for results...`);
-                } else {
-                    await logLive(`Warning: Could not find pagination button for page ${targetPage}. Staying on current page.`, 'warn');
-                }
+                await logLive(`Pagination navigation finished.`);
             } catch (pageErr) {
                 await logLive(`Error during explicit pagination: ${pageErr.message}`, 'error');
             }
