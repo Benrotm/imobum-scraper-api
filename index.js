@@ -780,7 +780,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
                 supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
                 immofluxUser, immofluxPass,
-                adminId, regionFilter, cityFilter
+                adminId, regionFilter, cityFilter, propertyTypeFilter, transactionTypeFilter
         } = req.body;
 
         if (!categoryUrl || !linkSelector || !extractSelectors) {
@@ -951,15 +951,45 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                 const countyId = countyMap[normalizedRegion];
 
                                 if (countyId) {
-                                        if (isFlux) {
-                                                const propUrl = 'https://fluxmls.immoflux.ro/properties';
+                                        if (isFlux || isImmo) {
+                                                const propUrl = isFlux ? 'https://fluxmls.immoflux.ro/properties' : targetUrl;
                                                 await page.goto(propUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
                                                 try {
-                                                        await logLive('Opening FluxMLS filter panel...', 'info');
+                                                        await logLive(`Opening filter panel...`, 'info');
                                                         const filterBtn = 'a[href="#filter-wrapper"], a[data-type="filterbutton"]';
-                                                        await page.waitForSelector(filterBtn, { timeout: 15000, state: 'visible' });
-                                                        await page.click(filterBtn);
+                                                        await page.waitForSelector(filterBtn, { timeout: 15000, state: 'visible' }).catch(() => null);
+                                                        if (await page.$(filterBtn)) {
+                                                                await page.click(filterBtn);
+                                                        }
+
+                                                        if (propertyTypeFilter) {
+                                                                await logLive(`Activating Property Type filter: ${propertyTypeFilter}...`, 'info');
+                                                                const btn = '.btn-select[data-id="category_id"]';
+                                                                if (await page.$(btn)) {
+                                                                        await page.click(btn);
+                                                                        await page.waitForTimeout(500);
+                                                                        await page.evaluate((val) => {
+                                                                                const items = Array.from(document.querySelectorAll('.dropdown-menu.open ul li a'));
+                                                                                const match = items.find(a => a.innerText.toLowerCase().includes(val.toLowerCase()));
+                                                                                if (match) match.click();
+                                                                        }, propertyTypeFilter);
+                                                                        await page.waitForTimeout(1000);
+                                                                }
+                                                        }
+
+                                                        if (transactionTypeFilter) {
+                                                                await logLive(`Activating Transaction Type filter: ${transactionTypeFilter}...`, 'info');
+                                                                const transInput = 'select#filter-transaction-id-in + .selectize-control .selectize-input input';
+                                                                if (await page.$(transInput)) {
+                                                                        await page.click(transInput);
+                                                                        await page.waitForTimeout(500);
+                                                                        await page.keyboard.type(transactionTypeFilter, { delay: 100 });
+                                                                        await page.waitForTimeout(1000);
+                                                                        await page.keyboard.press('Enter');
+                                                                        await page.waitForTimeout(1000);
+                                                                }
+                                                        }
 
                                                         await logLive('Activating Judet dropdown...', 'info');
                                                         const countySelectizeInput = 'select#filter-county-id-eq + .selectize-control .selectize-input input';
@@ -977,9 +1007,9 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                                         await logLive('Pressing Enter to commit filter...', 'info');
 
-                                                        // FluxMLS triggers an AJAX refresh immediately upon entry
+                                                        // Refresh immediately upon entry
                                                         const responsePromise = page.waitForResponse(response =>
-                                                                response.url().includes('properties/filter') && response.status() === 200,
+                                                                response.url().includes('filter') && response.status() === 200,
                                                                 { timeout: 15000 }
                                                         ).catch(() => null);
 
@@ -987,7 +1017,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
 
                                                         const ajaxRes = await responsePromise;
                                                         if (ajaxRes) {
-                                                                await logLive(`FluxMLS AJAX refresh confirmed for ${regionFilter}.`, 'success');
+                                                                await logLive(`AJAX refresh confirmed for filters.`, 'success');
                                                         } else {
                                                                 await logLive('AJAX refresh not detected. Assuming native state transition.', 'warn');
                                                         }
@@ -996,28 +1026,28 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                         await page.waitForTimeout(1500);
 
                                                         // DYNAMIC PAGINATION MUTATION
-                                                        // FluxMLS blocks direct GET queries to ?page=x and throws Laravel errors.
-                                                        // We must maliciously hijack an existing pagination click handler if we want a page > 1 natively via AJAX
                                                         if (pageNum > 1) {
-                                                                await logLive(`Executing DOM Mutation hack to skip to FluxMLS Page ${pageNum}...`, 'info');
+                                                                await logLive(`Executing DOM Mutation hack to skip to Page ${pageNum}...`, 'info');
                                                                 const pageSkipPromise = page.waitForResponse(response =>
-                                                                        response.url().includes('properties/filter') && response.status() === 200,
+                                                                        response.url().includes('filter') && response.status() === 200,
                                                                         { timeout: 15000 }
                                                                 ).catch(() => null);
 
                                                                 await page.evaluate((targetPage) => {
                                                                         const link = document.querySelector('.pagination li a');
                                                                         if (link) {
-                                                                                link.setAttribute('href', `https://fluxmls.immoflux.ro/properties/filter?page=${targetPage}`);
+                                                                                let base = window.location.href.split('?')[0];
+                                                                                if (!base.endsWith('/filter')) base += '/filter';
+                                                                                link.setAttribute('href', `${base}?page=${targetPage}`);
                                                                                 link.click();
                                                                         }
                                                                 }, pageNum);
 
                                                                 const skipRes = await pageSkipPromise;
                                                                 if (skipRes) {
-                                                                        await logLive(`Successfully loaded FluxMLS Page ${pageNum} natively!`, 'success');
+                                                                        await logLive(`Successfully loaded Page ${pageNum} natively!`, 'success');
                                                                 } else {
-                                                                        await logLive(`WARNING: FluxMLS native jump to page ${pageNum} may have failed.`, 'warn');
+                                                                        await logLive(`WARNING: Native jump to page ${pageNum} may have failed.`, 'warn');
                                                                 }
                                                                 await page.waitForTimeout(2000); // Wait for newly fetched TR elements to render
                                                         }
@@ -1026,33 +1056,6 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 } catch (guiError) {
                                                         throw new Error(`GUI Interaction failed: ${guiError.message}`);
                                                 }
-                                        } else if (isImmo) {
-                                                // Anunturi Particulari operates exclusively via HTTP GET parameters
-                                                // SCRAPER ENFORCEMENT: Build a fresh URL to avoid session-saved parameters from the base URL
-                                                const cleanUrl = new URL(parsedUrl.origin + parsedUrl.pathname);
-
-                                                // Sync essential parameters
-                                                if (pageNum) cleanUrl.searchParams.set('page', pageNum.toString());
-                                                cleanUrl.searchParams.set('filter_county_id__eq', countyId.toString());
-
-                                                if (cityFilter) {
-                                                        const normalizedCity = cityFilter.toLowerCase().trim();
-                                                        const cityId = cityMap[normalizedCity];
-                                                        if (cityId) {
-                                                                cleanUrl.searchParams.set('filter_city_id__eq', cityId.toString());
-                                                                await logLive(`Mapped City Filter '${cityFilter}' to ID ${cityId}`, 'success');
-                                                        } else {
-                                                                await logLive(`WARNING: No mapping found for city '${cityFilter}'. Scaling back to region-wide.`, 'warn');
-                                                        }
-                                                } else {
-                                                        await logLive(`No City Filter provided. Retrieving all listings for ${regionFilter} (ID: ${countyId}).`, 'info');
-                                                }
-
-                                                cleanUrl.searchParams.set('mode', 'list');
-
-                                                targetUrl = cleanUrl.toString();
-                                                await logLive(`Final Immoflux Target URL: ${targetUrl}`, 'success');
-                                        }
                                 } else {
                                         await logLive(`Could not find an internal ID matching '${regionFilter}'. Navigating cleanly natively.`, 'warn');
                                 }
