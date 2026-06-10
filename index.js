@@ -1056,6 +1056,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                 } catch (guiError) {
                                                         throw new Error(`GUI Interaction failed: ${guiError.message}`);
                                                 }
+                                        }
                                 } else {
                                         await logLive(`Could not find an internal ID matching '${regionFilter}'. Navigating cleanly natively.`, 'warn');
                                 }
