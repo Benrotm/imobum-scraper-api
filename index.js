@@ -864,11 +864,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 const isImmo = targetUrl.includes('immoflux.ro') && !isFlux;
 
                 if ((isFlux || isImmo) && immofluxUser && immofluxPass) {
-                        const loginUrl = targetUrl.includes('fluxmls.immoflux.ro')
-                                ? 'https://fluxmls.immoflux.ro/login'
-                                : targetUrl.includes('blitz.immoflux.ro')
-                                        ? 'https://blitz.immoflux.ro/login'
-                                        : 'https://immoflux.ro/login';
+                        const parsedTarget = new URL(targetUrl);
+                        const loginUrl = `${parsedTarget.origin}/login`;
                         await logLive(`Performing upfront authentication for ${loginUrl}...`, 'info');
 
                         await page.goto(loginUrl, { waitUntil: 'load', timeout: 45000 });
