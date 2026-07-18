@@ -777,7 +777,7 @@ app.post('/api/scrape-advanced', async (req, res) => {
 // === DYNAMIC PARTNER AUTO-SCRAPER ===
 app.post('/api/run-dynamic-scrape', async (req, res) => {
         const {
-                categoryUrl, jobId, pageNum, delayMin, delayMax, mode, linkSelector, extractSelectors, proxyConfig,
+                categoryUrl, jobId, pageNum, delayMin, delayMax, mode, continuousLoop, continuousPageDelay, continuousMaxPages, linkSelector, extractSelectors, proxyConfig,
                 supabaseUrl: reqSupabaseUrl, supabaseKey: reqSupabaseKey, webhookBaseUrl,
                 immofluxUser, immofluxPass,
                 adminId, regionFilter, cityFilter, propertyTypeFilter, transactionTypeFilter
@@ -891,7 +891,66 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         }
                 }
 
-                if (regionFilter && (isFlux || isImmo)) {
+                let currentPage = parseInt(pageNum) || 1;
+                let pagesProcessed = 0;
+                let totalProcessed = 0;
+                let totalSkipped = 0;
+
+                while (true) {
+                        if (await isJobStopped()) break;
+
+                        if (pagesProcessed > 0) {
+                                if (!continuousLoop || (continuousMaxPages > 0 && pagesProcessed >= continuousMaxPages)) {
+                                        await logLive(`Continuous loop stop condition reached (processed ${pagesProcessed} pages).`, 'info');
+                                        break;
+                                }
+
+                                const waitSec = parseInt(continuousPageDelay) || 30;
+                                await logLive(`Continuous Loop: Sleeping ${waitSec}s before navigating to Page ${currentPage} without logging out...`, 'info');
+                                await delay(waitSec * 1000);
+
+                                if (await isJobStopped()) break;
+
+                                if (regionFilter && (isFlux || isImmo)) {
+                                        await logLive(`Executing DOM Mutation hack to navigate to Page ${currentPage}...`, 'info');
+                                        const pageSkipPromise = page.waitForResponse(response =>
+                                                response.url().includes('filter') && response.status() === 200,
+                                                { timeout: 15000 }
+                                        ).catch(() => null);
+
+                                        await page.evaluate((targetPage) => {
+                                                const link = document.querySelector('.pagination li a');
+                                                if (link) {
+                                                        let base = window.location.href.split('?')[0];
+                                                        if (!base.endsWith('/filter')) base += '/filter';
+                                                        link.setAttribute('href', `${base}?page=${targetPage}`);
+                                                        link.click();
+                                                } else {
+                                                        let base = window.location.href.split('?')[0];
+                                                        if (!base.endsWith('/filter')) base += '/filter';
+                                                        window.location.href = `${base}?page=${targetPage}`;
+                                                }
+                                        }, currentPage);
+
+                                        const skipRes = await pageSkipPromise;
+                                        if (skipRes) {
+                                                await logLive(`Successfully navigated to Page ${currentPage} natively inside session!`, 'success');
+                                        } else {
+                                                await logLive(`WARNING: Native jump to page ${currentPage} may have fallen back to full load.`, 'warn');
+                                        }
+                                        await page.waitForTimeout(2000);
+                                } else {
+                                        const parsedUrl = new URL(categoryUrl);
+                                        parsedUrl.searchParams.set('page', currentPage.toString());
+                                        const nextTargetUrl = parsedUrl.toString();
+                                        await logLive(`Navigating to Page ${currentPage}: ${nextTargetUrl}`, 'info');
+                                        const waitCondition = (isFlux || isImmo) ? 'networkidle' : 'domcontentloaded';
+                                        await page.goto(nextTargetUrl, { waitUntil: waitCondition, timeout: 60000 });
+                                        if (isImmo) await page.waitForTimeout(5000);
+                                }
+                        } else {
+                                // First page iteration: run filter and initial navigation
+                                if (regionFilter && (isFlux || isImmo)) {
                         await logLive(`Applying upstream region filter: ${regionFilter}`, 'info');
                         try {
                                 const countyMap = {
@@ -1026,8 +1085,8 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                         await page.waitForTimeout(1500);
 
                                                         // DYNAMIC PAGINATION MUTATION
-                                                        if (pageNum > 1) {
-                                                                await logLive(`Executing DOM Mutation hack to skip to Page ${pageNum}...`, 'info');
+                                                        if (currentPage > 1) {
+                                                                await logLive(`Executing DOM Mutation hack to skip to Page ${currentPage}...`, 'info');
                                                                 const pageSkipPromise = page.waitForResponse(response =>
                                                                         response.url().includes('filter') && response.status() === 200,
                                                                         { timeout: 15000 }
@@ -1041,13 +1100,13 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                                                                                 link.setAttribute('href', `${base}?page=${targetPage}`);
                                                                                 link.click();
                                                                         }
-                                                                }, pageNum);
+                                                                }, currentPage);
 
                                                                 const skipRes = await pageSkipPromise;
                                                                 if (skipRes) {
-                                                                        await logLive(`Successfully loaded Page ${pageNum} natively!`, 'success');
+                                                                        await logLive(`Successfully loaded Page ${currentPage} natively!`, 'success');
                                                                 } else {
-                                                                        await logLive(`WARNING: Native jump to page ${pageNum} may have failed.`, 'warn');
+                                                                        await logLive(`WARNING: Native jump to page ${currentPage} may have failed.`, 'warn');
                                                                 }
                                                                 await page.waitForTimeout(2000); // Wait for newly fetched TR elements to render
                                                         }
@@ -1078,6 +1137,7 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                 } else {
                         await logLive(`Extraction proceeding naturally from physical POST navigation.`, 'info');
                 }
+                } // End of first page / subsequent page navigation check
 
                 // Override incorrect DB configurations for Immoflux
                 let effectiveSelector = linkSelector;
@@ -1209,18 +1269,12 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         return Array.from(new Set(validHrefs));
                 }, effectiveSelector);
 
-                await logLive(`Discovered ${propertyUrls.length} links on page limit.`, 'info');
+                await logLive(`Discovered ${propertyUrls.length} links on Page ${currentPage}.`, 'info');
 
                 if (propertyUrls.length === 0) {
-                        await logLive(`Extraction halted. No listings found on page ${pageNum}.`, 'warn');
-                        if (currentSupabase && jobId) {
-                                await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
-                        }
-                        return;
+                        await logLive(`Extraction halted. No listings found on Page ${currentPage}.`, 'warn');
+                        break;
                 }
-
-                let totalProcessed = 0;
-                let totalSkipped = 0;
 
                 for (let i = 0; i < propertyUrls.length; i++) {
                         if (await isJobStopped()) break;
@@ -1325,12 +1379,33 @@ app.post('/api/run-dynamic-scrape', async (req, res) => {
                         } catch (err) {
                                 await logLive(`Failed processing ${propUrl}: ${err.message}`, 'error');
                         }
-                } // End loop
+                } // End inner loop for propertyUrls on currentPage
+
+                pagesProcessed++;
+                currentPage++;
+
+                if (currentSupabase && continuousLoop && mode === 'history') {
+                        try {
+                                const { data: currentImmoRow } = await currentSupabase.from('admin_settings').select('value').eq('key', 'immoflux_integration').single();
+                                if (currentImmoRow && currentImmoRow.value) {
+                                        const val = typeof currentImmoRow.value === 'string' ? JSON.parse(currentImmoRow.value) : currentImmoRow.value;
+                                        val.last_scraped_id = currentPage;
+                                        await currentSupabase.from('admin_settings').upsert({ key: 'immoflux_integration', value: val, description: 'Configuration and mapping rules for the Immoflux properties scraper' }, { onConflict: 'key' });
+                                }
+                        } catch (e) {
+                                console.error("Failed to update immoflux_integration last_scraped_id during continuous loop:", e);
+                        }
+                }
+
+                if (!continuousLoop || (continuousMaxPages > 0 && pagesProcessed >= continuousMaxPages)) {
+                        break;
+                }
+                } // End while (true) page loop
 
                 let finalStatus = 'completed';
                 if (await isJobStopped()) finalStatus = 'stopped';
 
-                await logLive(`Dynamic Crawler finished. Processed: ${totalProcessed} | Skipped: ${totalSkipped}. Status: ${finalStatus}`, 'info');
+                await logLive(`Dynamic Crawler finished. Processed: ${totalProcessed} | Skipped: ${totalSkipped} across ${pagesProcessed} pages. Status: ${finalStatus}`, 'info');
 
                 if (currentSupabase && jobId && finalStatus === 'completed') {
                         await currentSupabase.from('scrape_jobs').update({ status: 'completed', completed_at: new Date() }).eq('id', jobId);
